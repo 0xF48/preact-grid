@@ -1,0 +1,267 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto:400,500|Gloria+Hallelujah');
+
+body{
+	font-family: "Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+	font-size: 14px;
+	line-height: 1.5;
+	font-size: 16px;
+	color: #24292e;
+	background-color: #fff;
+}
+
+.test{
+	font-family: 'Gloria Hallelujah', cursive;
+	font-size: 20px;
+}
+
+.center{
+	align-items : center;
+	display   : flex;
+	align-content : center;
+	justify-content: center;  
+}
+
+a{
+	text-decoration: none;
+}
+
+hr{
+	border: none;
+	border-bottom: 1px solid rgb(232, 232, 232);
+	background: none;
+	height: 0;
+}
+
+code{
+	background: rgb(255, 250, 213);
+}
+
+blockquote{
+	opacity: 0.5;
+	font-style: oblique;
+}
+
+.gradient-link{
+    position: absolute;
+    z-index: 10;
+    font-size: 20px;
+    width: 30px;
+    height: 30px;
+    text-decoration: none;
+    color: rgba(0, 0, 0, 0.3);
+    left: 0;
+    top: 0;
+    padding: 10px;
+}
+// title/header
+.header{
+	position: relative;
+	width: 100vw;
+	height: 100vh;
+
+}
+.canvas{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+.title{
+	position: absolute;
+	height: 100%;
+	width: 100%;
+	flex-direction: column;
+}
+.title-name{
+	font-family: 'Gloria Hallelujah', cursive;
+	font-size: 50px;
+	line-height: 50px;
+	color: #555555;
+}
+
+
+.github-link{
+	padding: 0px;
+	opacity: 0.3;
+	// background: white;
+	img{
+		fill: white;
+		width: 25px;
+		height: 25px;
+	}
+}
+
+.title-snippet{
+	margin: 10px;
+	font-family: monospace;
+	font-size: 12px;
+	color: rgba(0, 0, 0, 0.5215686274509804);
+	width: 340px;
+	height: 30px;
+}
+
+.title-snippet-text{
+	text-align: left;
+	padding: 6px 8px;
+	display: inline-block;
+}
+
+.header-description-sub{
+	font-style: oblique;
+	font-family: 'Gloria Hallelujah', cursive;
+	opacity: 0.4;
+	color: #1E1E1E;
+	font-size: 20px;
+	font-weight: 100;
+}
+
+.header-description{
+	position: absolute;
+	bottom: 0px;
+	box-sizing: border-box;
+	left: 0px;
+	// font-size: 18px;
+	// padding: 20px 0px;
+	margin: 50px 0px;
+	padding:  0px 10px;
+	width: 100%;
+	p{
+		position: relative;
+		margin: 20px auto;
+		max-width: 600px;
+		// margin: 10px 5px;
+	}
+
+}
+.shields{
+	margin: 10px 0px;
+	a{
+		margin-right: 4px;
+	}
+}
+
+h1{
+    font-style: oblique;
+    font-family: 'Gloria Hallelujah', cursive;
+    opacity: 0.4;
+    color: #1E1E1E;
+    font-size: 20px;
+    font-weight: 100;
+}
+
+//section
+.section{
+	max-width: 600px;
+	padding: 0px 10px;
+	margin: 0px auto;
+	margin-bottom: 100px;
+}
+.section-title{
+	color: #5A3D3C;
+	display: flex;
+	border-left: 4px solid #F1E0D9;
+	padding-left: 5px;
+	align-children: center;
+	line-height: 20px;
+	font-size: 20px;
+	text-decoration: none;
+
+	.section-title-name{
+		font-weight: 700;
+		
+			
+	}
+	// padding: 0px 10px;
+}
+.section-title-link{
+	color: #39383a;
+	/* margin: 0px 10px; */
+	padding: 10px 8px;
+	/* color: black; */
+	text-decoration: none;
+	text-align: center;
+	vertical-align: middle;
+	line-height: 40px;
+	margin-top: 50px;
+	font-size: 16px;
+	position: relative;
+	font-weight: 500;
+}
+.section-text{
+	padding: 0px;
+	p{
+		margin: 10px 0px;
+	}
+}
+
+//example
+.example{
+	max-width: 600px;
+	height: 300px;
+	font-family: 'Gloria Hallelujah', cursive;
+	-webkit-font-smoothing: auto;
+	text-rendering: optimizeSpeed;
+}
+
+.example-section{
+	margin-bottom:80px;
+}
+
+@import "./examples.scss";
+
+.prop{
+    width: auto;
+    margin-bottom: 30px;
+	div{
+		padding: 0px 2px;
+		/* font-size: 12px; */
+		/* margin: 0px 10px; */
+		display: inline-block;
+	}
+	.prop-name{
+		margin-right: 0px;
+		font-weight: 600;
+		color: #35405b;
+		border-left: 4px solid #f1f1f1;
+		padding-left: 5px;
+		font-size: 20px;
+	}
+	.prop-default{
+		margin-left: 0px;
+		opacity: 0.5;
+		font-size: 15px;
+
+	}
+	.prop-text{
+		margin-top: 5px;
+		display: block;
+		padding-top: 0px;
+		color: #3e3e3e;
+		p{
+			margin-top: 0px;
+		}
+	}
+}
+
+
+footer{
+	display: flex;
+	justify-content: center;
+	img{
+		width: 25px;
+		height: 25px;
+		padding: 10px;
+		margin: 0px auto;
+		opacity: 0.3;
+	}
+}
+
+.footer-author{
+	color: black;
+	line-height: 46px;
+	font-family: monospace;
+	opacity: 0.3;
+}
+
+
