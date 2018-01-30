@@ -1,8 +1,12 @@
 {
   "name": "preact-grid",
   "version": "1.0.0",
-  "description": "Preact Infinite Scrolling Grid",
+  "description": "Preact Infinite Scrolling Tetris Grid",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/arxii/preact-grid.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
