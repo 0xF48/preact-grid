@@ -60,7 +60,12 @@ class ScrollListener extends Component
 
 	componentWillUnmount: ->
 		@base.removeEventListener 'scroll',@onScroll
-
+	
+	componentDidUpdate: ->
+		@base.removeEventListener 'scroll',@onScroll
+		@base.addEventListener 'scroll',@onScroll
+		# console.log 'litener update'
+	
 	render: ->
 		@props.children[0]
 

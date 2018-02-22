@@ -54,8 +54,7 @@ class Toggle extends Component
 			onClick: =>
 				@state.toggle != null && @setState
 					toggle: !@state.toggle
-				,()=>
-					@props.onToggle(@state.toggle)
+				@props.onToggle?(@state.toggle)
 			@props.name + (@state.toggle != null && (@state.toggle && ' - on' || ' - off') || '')
 
 class Counter extends Component
@@ -73,10 +72,9 @@ class Counter extends Component
 		setInterval @update,1000
 
 	render: ->
-		h 'span',
-			className: 'count'
-			'total cells: '+@state.total
-
+		h Toggle,
+			initial: null
+			name: 'visible count - '+@state.total
 	
 
 
@@ -89,6 +87,10 @@ class Test extends Component
 			total_divs: 0
 			use_timeout: yes
 			max_reached: no
+			use_animate: yes
+			append: true
+			vertical: yes
+			scrollable_grid_key: rc()+rc()
 		@buildItems()
 
 
@@ -101,7 +103,7 @@ class Test extends Component
 				key: list.length
 				h Slide,
 					style:
-						background: "rgb(#{c},#{c},#{c-100}"
+						background: "rgb(#{c-100},#{c},#{c}"
 					className: 'grid-item'
 					center: yes
 					list.length
@@ -164,11 +166,16 @@ class Test extends Component
 		
 		scrollable_grid = h Grid,
 			className: 'grid'
+			key: @state.scrollable_grid_key
 			size: 10
-			animate: no
+			vert: @state.vertical
+			append: @state.append
+			animate: @state.use_animate
 			bufferOffsetCells: 6
+			animationOffsetCellBeta: 5
 			variation: 1
 			postChildren: h LoadIcon,
+				vert: @state.vertical
 				stop: @state.max_reached
 			# ease: '0.1s ease'
 			@scrollable_grid_items
@@ -213,9 +220,10 @@ class Test extends Component
 						center: yes
 						vert: yes
 						dim: DIM
-						'scrollable grid with stickies and timeout loader (1s)'
+						'Scrollable grid with stickies and timeout loader (1s). When grid key is changed, the grid is fully recalculated.'
 						h Slide,
 							center: yes
+							className: 'opts'
 							h Toggle,
 								name: 'timeout'
 								initial: @state.use_timeout
@@ -225,11 +233,39 @@ class Test extends Component
 							h Toggle,
 								name: @scrollable_grid_items.length+'/500'
 								initial: null
+							h Toggle,
+								name: 'grid key (reset): '+scrollable_grid.attributes.key
+								initial: null
+								onToggle: (v)=>
+									@setState
+										scrollable_grid_key: rc()+rc()
+							h Toggle,
+								name: 'animate'
+								initial: @state.use_animate
+								onToggle: (v)=>
+									@setState
+										use_animate: v
+							h Toggle,
+								name: 'append'
+								initial: @state.append
+								onToggle: (v)=>
+									@setState
+										append: v
+							h Toggle,
+								name: 'vertical'
+								initial: @state.vertical
+								onToggle: (v)=>
+									@setState
+										vertical: v
+										scrollable_grid_key: rc()+rc()
+
+
 
 
 					h Slide,
 						className: 'grid-wrap'
 						h ScrollListener,
+							vert: @state.vertical
 							onMinReached: =>
 								log 'min reached'
 							onMaxReached: =>

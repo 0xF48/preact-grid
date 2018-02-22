@@ -26,7 +26,7 @@ class GridItem extends Component
 		@style = {}
 
 	shouldComponentUpdate: (props)->
-		if @props.r != props.r || @props.c != props.c || @props.show != props.show
+		if @props.r != props.r || @props.c != props.c || @props.show != props.show || @context.vert != @state.vert || @context.dom != @state.dim
 			return true
 		else
 			return false
@@ -107,6 +107,7 @@ class GridItem extends Component
 
 
 		@state.dim = @context.dim
+		@state.vert = @context.vert
 
 		if @state.show != @props.show
 			@state.show = @props.show

@@ -9,6 +9,9 @@
 	background-color: #FFFFFF;
 	animation: rotate 1s infinite ease-in-out;
 	transition: opacity 0.3s ease;	
+	position: absolute;
+	top: calc(50% - 5px);
+	right: 25px;
 }
 .-i-loader-stop{
 	// border-radius: 0%;
@@ -17,6 +20,12 @@
 	opacity: 0.2;
 	transition: opacity 0.3s ease-in-out,transform 0.1s ease-in-out;
 	// transform: scale(0.7);
+}
+.-i-loader-vert{
+	top: initial;
+	right: initial;
+	left: calc(50% - 5px);
+	bottom: 25px;
 }
 
 @keyframes rotate {

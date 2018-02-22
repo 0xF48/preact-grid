@@ -9,13 +9,13 @@ DEFAULT_PROPS =
 	bufferOffsetCells: 4
 	animationOffsetCellBeta: 3
 	postChildren: null
-	# scrollOffsetBeta:
 	ease: '0.4s cubic-bezier(.29,.3,.08,1)'
 	size: 4
 	endPadding: 100
 	length: 5
 	animate: yes
 	variation: 1
+	append: yes
 
 
 
@@ -354,13 +354,6 @@ class Grid extends Component
 
 
 
-	# clearChildFromArray: (child)->
-	# 	arr = @state.index_array
-	# 	for row in [0...arr.length]
-	# 		for col in [0...arr[row].length]
-	# 			if arr[row][col] == child.attributes.i
-	# 				arr[row][col] = -1
-
 
 	setChild: (child,index)->
 		if !child
@@ -523,8 +516,6 @@ class Grid extends Component
 					else
 						children[spot].attributes.top = false
 						@state.display_children.unshift(@updateChildAttributes(children[spot]))
-		
-
 		return true
 
 
@@ -556,27 +547,25 @@ class Grid extends Component
 		# log newProps.children.length,oldProps.children.length
 
 		# append new children
-		if newProps.children.length > oldProps.children.length && oldProps.key == newProps.key
+
+		
+		# different grid key means that we need to set the children again.
+		if oldProps.key != newProps.key || newProps.children.length < oldProps.children.length
+			if @props.fixed
+				@state.display_children = @setChildren(newProps.children)
+				@setFixedDisplayChildren()
+			else
+				@offsetDisplayChildren(@setChildren(newProps.children))
+		else if newProps.children.length > oldProps.children.length
 			if @props.fixed
 				@appendChildren(newProps.children)
 				@setFixedDisplayChildren()
 			else
 				@offsetDisplayChildren(@appendChildren(newProps.children))
-		
-		# different grid key means that we need to set the children again.
-		else if oldProps.key != newProps.key || newProps.children.length < oldProps.children.length
-			if @props.fixed
-				@state.display_children = @setChildren(newProps.children)
-				@setFixedDisplayChildren()
-			else
-				@offsetDisplayChildren(@setChildren(newProps.children))			
-		
-
 		else
 			for child in @state.display_children
 				if !child
 					continue
-
 				c_attr = child.attributes
 				if @state.child_props[c_attr.i] && c_attr.r? && c_attr.c? && (@state.child_props[c_attr.i].r != c_attr.r || @state.child_props[c_attr.i].c != c_attr.c)
 					@setChild(child,child.attributes.i)
@@ -621,6 +610,7 @@ class Grid extends Component
 
 	#after grid has been updataed.
 	componentDidUpdate: (oldProps)->
+		# console.log 'GRID UPDATED'
 		@adjustResizedScrollPosition()
 		@_dim = @getDim()
 		@_l_dim = @getLengthDim()
@@ -682,13 +672,17 @@ class Grid extends Component
 		if @props.vert
 			if @props.fixed
 				height = '100%'
+				width = '100%'
 			else
 				height = @getInnerSize()+'px'
+				width = '100%'
 		else
 			if @props.fixed
 				width = '100%'
+				height = '100%'
 			else
 				width = @getInnerSize()+'px'
+				height = '100%'
 
 		ref: @inner_ref
 		className: "-i-grid-inner #{ @props.innerClassName || '' }"
@@ -726,7 +720,7 @@ class Grid extends Component
 
 	# render everything
 	render: ()=>
-		
+		# console.log 'RENDER',@props,@
 		
 		# calculate inner and outer props.
 		outer_props = @getOuterProps()
