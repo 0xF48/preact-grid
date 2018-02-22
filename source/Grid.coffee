@@ -1,13 +1,18 @@
 {h,Component} = require 'preact'
 
+# scrollListener = require './scrollListener.coffee'
+
 DEFAULT_PROPS =
 	vert: yes
 	className: null
 	fixed: no
-	bufferOffsetUnits: 4
-	animationOffsetUnitsBeta: 2
+	bufferOffsetCells: 4
+	animationOffsetCellBeta: 3
+	postChildren: null
+	# scrollOffsetBeta:
 	ease: '0.4s cubic-bezier(.29,.3,.08,1)'
 	size: 4
+	endPadding: 100
 	length: 5
 	animate: yes
 	variation: 1
@@ -21,6 +26,8 @@ _clamp = (n,min, max)->
 
 
 
+
+EVENT_REGEX = new RegExp('^on[A-Z]')
 
 
 
@@ -68,6 +75,7 @@ class Grid extends Component
 			props.oclass = props.className
 		if props.outerClass
 			props.oclass = props.outerClass
+		@passProps(props)
 
 
 	###
@@ -172,8 +180,18 @@ class Grid extends Component
 					# log cw,ch
 					@addChild(...@findHiddenChild(cw,ch))
 
+	
+	componentWillMount: ->
+		@passProps(@props)
 
 
+
+	passProps: (props)->
+		@pass_props = {}
+		for prop_name,prop of props
+			if EVENT_REGEX.test(prop_name)
+				@pass_props[prop_name] = prop 
+	
 	###
 	@freeSpot method
 	free up a particular spot,
@@ -322,6 +340,9 @@ class Grid extends Component
 
 		[row,col] = @getSpot(cw,ch)
 
+		child.attributes.r = row
+		child.attributes.c = col
+
 	
 		@state.child_props[index] = 
 			r: row
@@ -449,14 +470,21 @@ class Grid extends Component
 	the inner container size depends on how many rows of items the grid has. as soon as inner container height is set, the outer wrapper becomes scrollable.
 	###
 	getInnerSize: ()->
-		@getDim() * @state.index_array.length
+		@getLengthDim() * @state.index_array.length + @props.endPadding
 
 
+
+	updateChildAttributes: (child)->
+		# child.attributes.r = @state.child_props[child.attributes.key].r
+		# child.attributes.c = @state.child_props[child.attributes.key].c
+		child.attributes.show = if (@props.fixed || !@props.animate) then true else @isChildAnimationVisible(child)
+		return child
+
 	###
-	@offsetChildren method
-	calculate wich children get rendered based on scroll position and container/child size. The offset in units is managed with bufferOffsetUnits
+	@offsetDisplayChildren method
+	calculate which children get rendered based on scroll position and container/child size. The offset in units is managed with bufferOffsetCells
 	###
-	offsetChildren: (children)=>
+	offsetDisplayChildren: (children)=>
 		if @props.vert
 			outer_size = @_outer.clientHeight
 			outer_scroll = @_outer.scrollTop
@@ -466,37 +494,21 @@ class Grid extends Component
 
 		dim = @getLengthDim()
 
-		# console.log dim
-		
-	
 		
 		r_start = _clamp(Math.round( (outer_scroll) / dim ) - 1, 0, @state.index_array.length-1)
 		r_end = _clamp(Math.round( (outer_scroll + outer_size) / dim ) + 1, 0, @state.index_array.length-1)
 
-		# console.log r_end,@state.row_end
-
-		# console.log r_start,@state.row_start,',',r_end,@state.row_start
 		if r_start > @state.row_start && r_end < @state.row_end
-			@state.offset_update = false
-			# console.log 'dont update'
-			return @state.display_children
+			return false
 
-		@state.row_start = _clamp(Math.round( (outer_scroll) / dim ) - @props.bufferOffsetUnits, 0, @state.index_array.length-1)
-		@state.row_end = _clamp(Math.round( (outer_scroll + outer_size) / dim ) + @props.bufferOffsetUnits, 0, @state.index_array.length-1)
+		@state.row_start = _clamp(Math.round( (outer_scroll) / dim ) - @props.bufferOffsetCells, 0, @state.index_array.length-1)
+		@state.row_end = _clamp(Math.round( (outer_scroll + outer_size) / dim ) + @props.bufferOffsetCells, 0, @state.index_array.length-1)
 		
-
-		@state.offset_update = true
-
-
-		# @state.row_start = row_start
-		# @state.row_end = row_end
 		
-
-
-		display_children = []
+		@state.display_children = []
 		added = []
 		
-
+		# get children between the start row and end row and set them as the display children to pass to render.
 		for row in [@state.row_start...@state.row_end]
 			for spot in @state.index_array[row]
 				if !children[spot]
@@ -507,13 +519,16 @@ class Grid extends Component
 					added[spot] = true
 					if @state.scroll_up
 						children[spot].attributes.top = true
-						display_children[display_children.length] = children[spot]
+						@state.display_children[@state.display_children.length] = @updateChildAttributes(children[spot])
 					else
 						children[spot].attributes.top = false
-						display_children.unshift(children[spot])
+						@state.display_children.unshift(@updateChildAttributes(children[spot]))
 		
 
-		return display_children
+		return true
+
+
+		
 
 	###
 	@offsetFixedChildren method
@@ -536,116 +551,42 @@ class Grid extends Component
 
 		
 
-	###
-	@updateGrid method
-	update/recalculate grid when component is updated.
-	###
+	# recalculate grid when items have changed.
 	updateGrid: (oldProps,newProps)->
+		# log newProps.children.length,oldProps.children.length
 
-		force_fill = false
-
-		if newProps.children.length > @state.arr_len && oldProps.key == newProps.key
+		# append new children
+		if newProps.children.length > oldProps.children.length && oldProps.key == newProps.key
 			if @props.fixed
 				@appendChildren(newProps.children)
 				@setFixedDisplayChildren()
 			else
-				@state.display_children = @offsetChildren(@appendChildren(newProps.children))
-		else if oldProps.key != newProps.key
+				@offsetDisplayChildren(@appendChildren(newProps.children))
+		
+		# different grid key means that we need to set the children again.
+		else if oldProps.key != newProps.key || newProps.children.length < oldProps.children.length
 			if @props.fixed
-				@setChildren(newProps.children)
+				@state.display_children = @setChildren(newProps.children)
 				@setFixedDisplayChildren()
 			else
-				@state.display_children = @offsetChildren(@setChildren(newProps.children))			
+				@offsetDisplayChildren(@setChildren(newProps.children))			
+		
+
 		else
 			for child in @state.display_children
 				if !child
 					continue
-				
-				
-				
+
 				c_attr = child.attributes
 				if @state.child_props[c_attr.i] && c_attr.r? && c_attr.c? && (@state.child_props[c_attr.i].r != c_attr.r || @state.child_props[c_attr.i].c != c_attr.c)
-					# log 'set child'
 					@setChild(child,child.attributes.i)
-					force_fill = true
-
-			
-
-		if force_fill
-			if !@stop_fill
-				@fillEmptySpots()
-			@setFixedDisplayChildren()
-			
-		# if oldProps.children.length != newProps.children.length || oldProps.list_key != newProps.list_key
-		# 	if @props.fixed
-		# 		@state.display_children = @offsetFixedChildren(@setChildren(newProps.children))
-		# 	else
-		# 		@state.display_children = @offsetChildren(@setChildren(newProps.children))
-
-		# else if oldProps.appendChildren.length != newProps.appendChildren.length
-		# 	if @props.fixed
-		# 		@state.display_children = @offsetFixedChildren(@appendChildren(newProps.children))
-		# 	else
-		# 		@state.display_children = @offsetChildren(@appendChildren(newProps.children))
+					if !@stop_fill
+						@fillEmptySpots()
+					@setFixedDisplayChildren()
 
 
-	###
-	@onScroll method
-	update/recalculate grid when component is updated.
-	###
-	onScroll: ()=>
-		outer_scroll = if @props.vert then @_outer.scrollTop else @_outer.scrollLeft
-		if @state.last_scroll > outer_scroll
-			@state.scroll_up = true
-		else
-			@state.scroll_up = false
-		@state.last_scroll = outer_scroll
-		@state.display_children = @offsetChildren(@props.children)
-		if @state.offset_update
-			@forceUpdate()
-
-
-	onMouseMove: (e)=>
-		if !@props.onUnitMouseEnter
-			return
-		@_rect = @_outer.getBoundingClientRect()
-		c = Math.floor((e.clientX - @_rect.x) / @_dim)
-		r = Math.floor((e.clientY - @_rect.y) / @_l_dim)
-		
-		if @_mouse_c != c || @_mouse_r != r
-			@props.onUnitMouseEnter(r,c,@state.index_array[r]?[c])
-
-		@_mouse_c = c
-		@_mouse_r = r
-	
-
-
-
-	###
-	@componentDidMount method
-	update/recalculate grid when component is updated.
-	###
-	componentDidMount: ()->
-		if @props.fixed 
-			@state.display_children = @setChildren(@props.children)
-		else
-			@state.display_children = @offsetChildren(@setChildren(@props.children))
-			# console.log @state.display_children
-		
-		@forceUpdate()
-	
-
-	###
-	@componentWillUpdate method
-	###
-	componentWillUpdate: (newProps)->
-		@updateGrid(@props,newProps)
-
-
-	###
-	@componentDidUpdate method
-	###
-	componentDidUpdate: (oldProps)->
+	# adjust the scroll position of the grid when it is resized.
+	adjustResizedScrollPosition: ->
 		size = if @props.vert then @_outer.clientWidth else @_outer.clientHeight
 		if size != @state.size
 			diff = size / @state.size
@@ -655,15 +596,46 @@ class Grid extends Component
 			else
 				@_outer.scrollLeft *= diff
 
+
+	# initial mount
+	componentDidMount: ()->
+		if @props.fixed 
+			@state.display_children = @setChildren(@props.children)
+		else
+			@offsetDisplayChildren(@setChildren(@props.children))
+
+		# @scrollListener = new scrollListener
+		# 	el: @_outer
+		# 	vert: @props.vert
+		# 	offsetBeta: @props.scrollOffsetBeta
+
+			
+		@forceUpdate()
+	
+
+	#update the grid before rendering
+	componentWillUpdate: (newProps)->
+		@updateGrid(@props,newProps)
+
+
+
+	#after grid has been updataed.
+	componentDidUpdate: (oldProps)->
+		@adjustResizedScrollPosition()
 		@_dim = @getDim()
 		@_l_dim = @getLengthDim()
 		@_rect = @_outer.getBoundingClientRect()
 
 
-	###
-	@childVisible decide if child is visible based on its size and position relative to the outer container
-	###
-	childVisible: (child)->
+
+	#check if child is visible for the animation based on its size and position relative to the outer container
+	isChildAnimationVisible: (child)->
+
+		# since we only check the visibility of children which are already in the buffer, we can just set their visibility to true if we are not animating.
+		if @props.animate == false
+			return true
+
+
 		outer_size = if @props.vert then @_outer.clientHeight else @_outer.clientWidth
 		scroll_pos = if @props.vert then @_outer.scrollTop else @_outer.scrollLeft
 		if !@_outer
@@ -671,7 +643,7 @@ class Grid extends Component
 
 		
 		dim = @getLengthDim()
-		offset = dim * @props.animationOffsetUnitsBeta
+		offset = dim * @props.animationOffsetCellBeta
 		if child.attributes.r * dim + dim * child.attributes.h < scroll_pos - offset
 			return false
 
@@ -691,45 +663,82 @@ class Grid extends Component
 		@_inner = e
 
 
-	###
-	@render method
-	###
-	render: ()=>
-		
-
-		for child,i in @state.display_children
-			if child
-				child.attributes.r = @state.child_props[child.attributes.key].r
-				child.attributes.c = @state.child_props[child.attributes.key].c
-				child.attributes.show = if @props.fixed then true else @childVisible(child)
-
-
-
-		if @props.show_loader
-			stop_loader  = @props.max_reached && @max_scroll_pos >= @total_max_pos && '-i-loader-stop' || ''
-			loader = h 'div',
-				className: "-i-loader #{stop_loader||''}"
-
-
-		@state.offset_update = false
-		if @props.vert
-			inner_style =
-				height: if !@props.fixed then (@getInnerSize()+'px') else '100%'
-		else
-			inner_style =
-				width: if !@props.fixed then (@getInnerSize()+'px') else '100%'
-		h 'div',
+	# calculate the properties of the outer scrollable grid wrapper.
+	getOuterProps: ->
+		outer_props = Object.assign
 			key: @key
 			ref: @outer_ref
-			onScroll: @onScroll
-			onMouseMove: @onMouseMove
 			className: "-i-grid #{@props.vert && '-i-grid-vert' || ''} #{@props.fixed && '-i-grid-fixed' || ''} #{@props.className || @props.outerClassName}"
+		,@pass_props
+
+		outer_props.onScroll = @onScroll
+		outer_props.onMouseMove = @onMouseMove
+
+		return outer_props
+
+
+	# calculate the properties of the inner container.
+	getInnerProps: ->
+		if @props.vert
+			if @props.fixed
+				height = '100%'
+			else
+				height = @getInnerSize()+'px'
+		else
+			if @props.fixed
+				width = '100%'
+			else
+				width = @getInnerSize()+'px'
+
+		ref: @inner_ref
+		className: "-i-grid-inner #{ @props.innerClassName || '' }"
+		style:
+			width: width
+			height: height
+
+
+	# update/recalculate grid when component is updated.
+	onScroll: ()=>
+		outer_scroll = if @props.vert then @_outer.scrollTop else @_outer.scrollLeft
+		if @state.last_scroll > outer_scroll
+			@state.scroll_up = true
+		else
+			@state.scroll_up = false
+		@state.last_scroll = outer_scroll
+		if @offsetDisplayChildren(@props.children)
+			@forceUpdate()
+
+
+	# for moving items around in fixed grids.
+	onMouseMove: (e)=>
+		if !@props.onUnitMouseEnter
+			return
+		@_rect = @_outer.getBoundingClientRect()
+		c = Math.floor((e.clientX - @_rect.x) / @_dim)
+		r = Math.floor((e.clientY - @_rect.y) / @_l_dim)
+		
+		if @_mouse_c != c || @_mouse_r != r
+			@props.onUnitMouseEnter(r,c,@state.index_array[r]?[c])
+
+		@_mouse_c = c
+		@_mouse_r = r
+	
+
+	# render everything
+	render: ()=>
+		
+		
+		# calculate inner and outer props.
+		outer_props = @getOuterProps()
+		inner_props = @getInnerProps()
+	
+		# render only the display children and a loader if there is one.
+		h 'div',
+			outer_props
 			h 'div',
-				style: inner_style
-				ref: @inner_ref
-				className: "-i-grid-inner #{ @props.innerClassName || '' }"
+				inner_props
 				@state.display_children
-				loader
+				@props.postChildren
 
 
 Grid.defaultProps = DEFAULT_PROPS

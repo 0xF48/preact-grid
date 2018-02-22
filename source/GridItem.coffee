@@ -93,7 +93,7 @@ class GridItem extends Component
 	# 	log 'WILL MOUNT'
 
 	rand: =>
-		.5 + (-@context.variation + Math.random() * @context.variation*2 )
+		(-@context.variation + Math.random() * @context.variation*2 )
 		
 
 	
@@ -103,18 +103,21 @@ class GridItem extends Component
 		# @state.transform = 'matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1) translate('+xy.x+'px,'+xy.y+'px)'
 		
 		# log xy.x,xy.y
+		
 
 
 		@state.dim = @context.dim
 
 		if @state.show != @props.show
 			@state.show = @props.show
-			if @state.show == true
 
+			if @state.show == true && @context.animate == false
+				@state.transform = 'translate('+xy.x+'px,'+xy.y+'px)'
+			else if @state.show == true
 				if (@context.vert && @context.dim*@props.w > @context.length_dim*@props.h) || (!@context.vert && @context.dim*@props.w < @context.length_dim*@props.h)
-					@state.transform = 'matrix3d(0.6,0,0,'+(-0.001+@rand()*0.002)+',0.00,0,1,'+(@props.top && '-' || '')+'0.003,0,-1,0,0,0,0,0,1) translate('+xy.x+'px,'+xy.y+'px)'
+					@state.transform = 'matrix3d('+(@context.variation && 0.6 || 0.9)+',0,0,'+(@rand()*0.002)+',0.00,0,1,'+(@props.top && '-' || '')+'0.003,0,-1,0,0,0,0,0,1) translate('+xy.x+'px,'+xy.y+'px)'
 				else
-					@state.transform = 'matrix3d(0,0,1,'+(-0.001+@rand()*0.002)+',0.00,0.6,0,0.001,-1,0,0,0,0,0,0,1) translate('+xy.x+'px,'+xy.y+'px)'
+					@state.transform = 'matrix3d(0,0,1,'+(@rand()*0.002)+',0.00,0.6,0,0.001,-1,0,0,0,0,0,0,1) translate('+xy.x+'px,'+xy.y+'px)'
 
 				@state.transition = ''
 

@@ -1,9 +1,9 @@
 {Component,h,render} = require 'preact'
 require './test.less'
 Slide = require 'preact-slide'
-{Grid,GridItem} = require '../source/preact-grid.coffee'
-DIM = 40
-
+{Grid,GridItem,ScrollListener,LoadIcon} = require '../source/preact-grid.coffee'
+DIM = 80
+window.log = console.log.bind(console)
 
 
 nums = require './random.json'
@@ -42,13 +42,72 @@ rc = ->
 # 	background: "rgb(#{c[0]},#{c[1]},#{c[2]})"
 
 
+class Toggle extends Component
+	constructor: (props)->
+		super(props)
+		@state =
+			toggle: props.initial
+
+	render: ->
+		h 'span',
+			className: 'toggle '+(@state.toggle && 'on' || null)
+			onClick: =>
+				@state.toggle != null && @setState
+					toggle: !@state.toggle
+				,()=>
+					@props.onToggle(@state.toggle)
+			@props.name + (@state.toggle != null && (@state.toggle && ' - on' || ' - off') || '')
+
+class Counter extends Component
+	constructor: ->
+		super()
+		@state =
+			total: 0
+	update: =>
+		total = document.body.querySelectorAll('.-i-grid-item-outer ').length
+		if @state.total != total
+			@setState
+				total: total
+
+	componentDidMount: ->
+		setInterval @update,1000
+
+	render: ->
+		h 'span',
+			className: 'count'
+			'total cells: '+@state.total
+
+	
 
 
 
 
 class Test extends Component
-	render: ->
-		scrollable_list_items = [0...1000].map (i)->
+	constructor: ->
+		super()
+		@state =
+			total_divs: 0
+			use_timeout: yes
+			max_reached: no
+		@buildItems()
+
+
+	appendItems: (list)->
+		for i in [0...200]
+			c = Math.floor(255 - rand()*40)
+			list.push h GridItem,
+				w: Math.floor(1+rand()*2)
+				h: Math.floor(1+rand()*2)
+				key: list.length
+				h Slide,
+					style:
+						background: "rgb(#{c},#{c},#{c-100}"
+					className: 'grid-item'
+					center: yes
+					list.length
+
+	buildItems: ->
+		@scrollable_list_items = [0...2000].map (i)->
 			c = Math.floor(255 - rand()*40)
 			h GridItem,
 				w: 1
@@ -60,21 +119,10 @@ class Test extends Component
 					className: 'grid-item'
 					center: yes
 					i
-		
-		scrollable_grid_items = [0...1000].map (i)->
-			c = Math.floor(255 - rand()*40)
-			h GridItem,
-				w: Math.floor(1+rand()*2)
-				h: Math.floor(1+rand()*2)
-				key: i
-				h Slide,
-					style:
-						background: "rgb(#{c-100},#{c},#{c}"
-					className: 'grid-item'
-					center: yes
-					i
 
-		scrollable_slist_items = [0...1000].map (i)->
+		@scrollable_grid_items = []
+
+		@scrollable_slist_items = [0...200].map (i)->
 			c = Math.floor(255 - rand()*40)
 			h GridItem,
 				w: 1
@@ -87,7 +135,7 @@ class Test extends Component
 					center: yes
 					i
 		
-		scrollable_sgrid_items = [0...1000].map (i)->
+		@scrollable_sgrid_items = [0...200].map (i)->
 			c = Math.floor(255 - rand()*40)
 			h GridItem,
 				w: Math.floor(1+rand()*2)
@@ -100,31 +148,43 @@ class Test extends Component
 					center: yes
 					i
 
+
+	render: ->
+		# console.log 'test'
+
+
 		scrollable_list = h Grid,
 			className: 'grid'
 			size: 1
-			dim: 100
+			dim: 40
 			variation: 0
-			scrollable_list_items
+			bufferOffsetCells: 5
+			animate: false
+			@scrollable_list_items
 		
 		scrollable_grid = h Grid,
 			className: 'grid'
-			size: 4
-			variation: 0
-			scrollable_grid_items
+			size: 10
+			animate: no
+			bufferOffsetCells: 6
+			variation: 1
+			postChildren: h LoadIcon,
+				stop: @state.max_reached
+			# ease: '0.1s ease'
+			@scrollable_grid_items
 
 		scrollable_sticky_list = h Grid,
 			className: 'grid'
 			size: 1
 			dim: 100
 			variation: 0
-			scrollable_slist_items
+			@scrollable_slist_items
 		
 		scrollable_sticky_grid = h Grid,
 			className: 'grid'
 			size: 4
-			variation: 0
-			scrollable_sgrid_items
+			variation: 1
+			@scrollable_sgrid_items
 
 
 		
@@ -134,7 +194,7 @@ class Test extends Component
 			h Slide,
 				center: yes
 				dim: DIM
-				'stats:'
+				h Counter
 
 			h Slide,
 				vert: no
@@ -151,11 +211,38 @@ class Test extends Component
 					vert: yes
 					h Slide,
 						center: yes
+						vert: yes
 						dim: DIM
-						'scrollable grid with stickies'
+						'scrollable grid with stickies and timeout loader (1s)'
+						h Slide,
+							center: yes
+							h Toggle,
+								name: 'timeout'
+								initial: @state.use_timeout
+								onToggle: (v)=>
+									@setState
+										use_timeout: v
+							h Toggle,
+								name: @scrollable_grid_items.length+'/500'
+								initial: null
+
+
 					h Slide,
 						className: 'grid-wrap'
-						scrollable_grid
+						h ScrollListener,
+							onMinReached: =>
+								log 'min reached'
+							onMaxReached: =>
+								setTimeout =>
+									if @scrollable_grid_items.length > 500
+										return @setState
+											max_reached: yes
+									@appendItems(@scrollable_grid_items)
+									@forceUpdate()
+								,@state.use_timeout && 1000 || 0
+								log 'max reached'
+							scrollable_grid
+
 			h Slide,
 				vert: no
 				h Slide,
