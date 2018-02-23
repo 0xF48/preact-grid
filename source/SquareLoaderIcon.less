@@ -1,5 +1,5 @@
 // loader
-.-i-loader {
+.-ii-loader {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -10,10 +10,10 @@
 	animation: rotate 1s infinite ease-in-out;
 	transition: opacity 0.3s ease;	
 	position: absolute;
-	top: calc(50% - 5px);
+	top: ~"calc(50% - 5px)";
 	right: 25px;
 }
-.-i-loader-stop{
+.-ii-loader-stop{
 	// border-radius: 0%;
 	animation: rotate 0.3s ease-in-out;
 	animation-iteration-count: 0;
@@ -21,10 +21,10 @@
 	transition: opacity 0.3s ease-in-out,transform 0.1s ease-in-out;
 	// transform: scale(0.7);
 }
-.-i-loader-vert{
+.-ii-loader-vert{
 	top: initial;
 	right: initial;
-	left: calc(50% - 5px);
+	left: ~"calc(50% - 5px)";
 	bottom: 25px;
 }
 

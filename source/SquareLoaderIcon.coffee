@@ -1,6 +1,6 @@
 {h} = require 'preact'
 
-require './LoaderIcon.less'
+require './SquareLoaderIcon.less'
 class LoadIcon
 	render: (props)->
 		cn = '-i-loader'

@@ -12,5 +12,18 @@
     "dev": "webpack-dev-server --progress --config ./test/test.config.js"
   },
   "author": "arxii",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "coffee-loader": "^0.9.0",
+    "coffeescript": "^2.2.2",
+    "css-loader": "^0.28.10",
+    "less": "^3.0.1",
+    "less-loader": "^4.0.5",
+    "preact": "^8.2.7",
+    "preact-scroll-events": "^1.0.1",
+    "preact-slide": "^0.2.1-b",
+    "style-loader": "^0.20.2",
+    "webpack": "^3.11.0"
+  },
+  "dependencies": {}
 }
