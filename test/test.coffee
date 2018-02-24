@@ -109,33 +109,35 @@ class LargeGridTest extends Component
 					@list.length
 
 	prependItems: ()=>
+		l = @list.length
 		for i in [0...200]
 			c = Math.floor(255 - rand()*40)
 			@list.unshift h GridItem,
 				w: Math.floor(1+rand()*2)
 				h: Math.floor(1+rand()*2)
-				key: @list[0].attributes.key - 1
+				key: l + 200 - i
+				prepend: true
 				h Slide,
 					style:
 						background: "rgb(#{c-100},#{c},#{c}"
 					className: 'grid-item'
 					center: yes
-					@list[0].attributes.key - 1
+					l + 200 - i
 
 	onMaxReached: =>
-		setTimeout =>
-			if @list.length > 500
-				return @setState
-					max_reached: yes
-			@appendItems()
-			@forceUpdate()
-		,@state.use_timeout && 1000 || 0
+		# setTimeout =>
+		# 	if @list.length > 500
+		# 		return @setState
+		# 			max_reached: yes
+		# 	@appendItems()
+		# 	@forceUpdate()
+		# ,@state.use_timeout && 1000 || 0
 
 	onMinReached: =>
 		log 'min reached'
-		return false
+		# return false
 		setTimeout =>
-			if @list.length > 500
+			if @list.length > 5000
 				return @setState
 					max_reached: yes
 			@prependItems()
@@ -155,8 +157,8 @@ class LargeGridTest extends Component
 				vert: @state.vertical
 				prepend: @state.prepend
 				animate: @state.use_animate
-				bufferOffsetCells: 6
-				animationOffsetCellBeta: 5
+				bufferOffsetCells: 2
+				animationOffsetCellBeta: 1
 				variation: 1
 				postChildren: h LoadIcon,
 					vert: @state.vertical
@@ -173,7 +175,7 @@ class LargeGridTest extends Component
 					@setState
 						use_timeout: v
 			h Toggle,
-				name: @list.length+'/500'
+				name: @list.length+'/5000'
 				initial: null
 			h Toggle,
 				name: 'grid key (reset): '+@state.key

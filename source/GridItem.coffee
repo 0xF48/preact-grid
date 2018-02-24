@@ -39,13 +39,13 @@ class GridItem extends Component
 		if @context.vert
 			left = @props.c*d 
 			width  = d*@props.w
-			top = @props.r * ld 
+			top = @props.r * ld + @context.startPadding
 			height = @props.h * ld 
 		
 		else
 			top = @props.c*d
 			height  = d*@props.w
-			left = @props.r * ld
+			left = @props.r * ld + @context.startPadding
 			width = @props.h * ld 
 
 		return 
@@ -99,6 +99,7 @@ class GridItem extends Component
 	
 	render: ()->
 		xy = @getDim()
+		# console.log xy,@props.r
 		
 		# @state.transform = 'matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1) translate('+xy.x+'px,'+xy.y+'px)'
 		

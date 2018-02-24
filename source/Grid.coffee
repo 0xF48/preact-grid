@@ -6,13 +6,13 @@ DEFAULT_PROPS =
 	vert: yes #is the grid vertical?
 	className: null #outer wrapper className
 	fixed: no  #is the grid fixed? if so the grid will fill up and any added children afterwards will replace the ones that were added at the beginning.
-	bufferOffsetCells: 4 #how many height units to buffer items for when updating the display children. depending on the size of your grid you may need more buffering to avoid extra renders. when there are many buffered children, the total div count increases but the calculations to diff the children decreases.
-	animationOffsetCellBeta: 3 #when to start animating children in (if they are x height units below the screen) adjust this based on scroll speed relative to how many units there.
+	bufferOffsetCells: 6 #how many height units to buffer items for when updating the display children. depending on the size of your grid you may need more buffering to avoid extra renders. when there are many buffered children, the total div count increases but the calculations to diff the children decreases.
+	animationOffsetCellBeta: 1 #when to start animating children in (if they are x height units below the screen) adjust this based on scroll speed relative to how many units there.
 	postChildren: null #add extra children after all the display children have been added.
 	ease: '0.4s cubic-bezier(.29,.3,.08,1)' #easing for fade in effect on each child.
 	size: 4 #grid size across≥
-	endPadding: 50 # padding to add to the bottom of the grid (when appending and you want to display a loader)
-	startPadding: 50 # padding to add to the top of the grid (when prepending and you want to display a loader)
+	endPadding: 100 # padding to add to the bottom of the grid (when appending and you want to display a loader)
+	startPadding: 100 # padding to add to the top of the grid (when prepending and you want to display a loader)
 	length: 5 # the length of the grid when it is fixed.
 	animate: yes #do animations?
 	variation: 1 #animation variation amount for each child.
@@ -36,17 +36,23 @@ class Grid extends Component
 			
 			#the matrix that holds the info for the positions and width/height (in integer units) of the children for easy search.
 			matrix: []
-
+			offset: 0
+			total_offset: 0
 			# minimum row index for matrix
-			min_row_index: 0
+			max_full_row: 0
+			min_full_row: 0
 			
 			#leftovers from react.
 			# child_props: []
 			children_map: {}
 
-			# used in setDisplayChildren to diff the current min/max rendered row and the needed min/max row
-			row_min: null
-			row_max: null
+			# used in setDisplayChildren to decide if and what we need to render/view
+			render_min: null
+			render_max: null
+			view_min: null
+			view_max: null
+
+		
 
 		if @props.fixed
 			@buildFixedMatrix()
@@ -83,6 +89,7 @@ class Grid extends Component
 
 	# child context object
 	getChildContext: ()=>
+		startPadding: @props.startPadding
 		vert: @props.vert
 		animate: @props.animate
 		size: @props.size
@@ -105,11 +112,13 @@ class Grid extends Component
 
 	# fill matrix spot with child key
 	fillSpot: (child)->
+		r = 0
 		for row in [child.attributes.r...child.attributes.r+child.attributes.h]
+			r++
 			for col in [child.attributes.c...child.attributes.c+child.attributes.w]
 				if !@state.matrix[row] || @state.matrix[row][col] != null || @state.matrix[row][col] == undefined
 					throw new Error "Internal Error: cannot fill spot that is not empty! Please report this bug : #{row},#{col},#{@state.matrix[row]}"
-				@state.matrix[row][col] = child.attributes.key
+				@state.matrix[row][col] = [child.attributes.key,r-1]
 
 	
 
@@ -170,7 +179,7 @@ class Grid extends Component
 									return
 							ch++
 					# log cw,ch
-					@addChild(@findHiddenChild(cw,ch))
+					@appendChild(@findHiddenChild(cw,ch))
 
 	
 	componentWillMount: ->
@@ -252,7 +261,14 @@ class Grid extends Component
 			row = []
 			for c in [0...@props.size]
 				row[c] = null
-			@state.matrix.push row
+			if amount < 0
+				@state.matrix.unshift row
+				@state.offset++
+				@state.total_offset++
+				@state.min_full_row++
+				@state.max_full_row++
+			else
+				@state.matrix.push row
 
 
 
@@ -280,18 +296,17 @@ class Grid extends Component
 		found = false #found spot
 		row_filled = true #row filled 
 
-		# console.log @state.min_row_index
 		
-		if (@state.matrix.length - @state.min_row_index) <= h then @increaseMatrixSize(h)
+		if (@state.matrix.length - @state.max_full_row) <= h then @increaseMatrixSize(h)
 
-		for row in [@state.min_row_index...@state.matrix.length]
+		for row in [@state.max_full_row...@state.matrix.length]
 			for spot,col in @state.matrix[row]
 				if spot == null
 					row_filled = false #row is filled
 				if @checkSpot(row,col,w,h)
 					return [row,col]
 			if row_filled
-				@state.min_row_index = row
+				@state.max_full_row = row
 
 		if _test
 			throw new Error 'Internal Error: could not find free spot! Please report this bug.'
@@ -305,16 +320,70 @@ class Grid extends Component
 
 
 
+	getMinSpot: (w,h,_test)->
+		min_r_i = 0 #min row index
+		found = false #found spot
+		row_filled = true #row filled 
+
+		if ( @state.min_full_row ) <= h then @increaseMatrixSize(-h)
+		
+		# log (@state.min_full_row - @state.offset),@state.offset,@state.min_full_row
+
+		# log @state.matrix,@state.min_full_row
+
+		# throw 'stop'
+		# console.log @state.min_full_row
+		
+		
+
+		for row in [@state.min_full_row-1...0]
+			for spot,col in @state.matrix[row]
+				if spot == null
+					row_filled = false #row is filled
+				if @checkSpot(row,col,w,h)
+					# log 'RETURN',row
+					return [row,col]
+			if row_filled
+				@state.min_full_row = row
+
+
+		if _test
+			throw new Error 'Internal Error: could not find free spot! Please report this bug.'
+
+
+		if !@props.fixed
+			@increaseMatrixSize(-h)
+			return @getMinSpot(w,h)
+		else
+			@freeSpot(w,h)
+			return @getMinSpot(w,h,true)
+
+
+
+
 
 
 	###
-	@addChild method
+	@appendChild method
 	add new child and calculate its size and positioning.
 	###	
-	addChild: (child,index)->
+	appendChild: (child)->
+		# console.log 'append child',child.attributes.key
 		if !child
 			throw new Error 'props.children can only be GridItems.'
 		[child.attributes.r,child.attributes.c] = @getSpot(child.attributes.w,child.attributes.h)
+		child.attributes._offset = @state.offset
+		@state.children_map[child.attributes.key] = child
+	
+		@fillSpot(child)
+
+	prependChild: (child)->
+		if !child
+			throw new Error 'props.children can only be GridItems.'
+		[child.attributes.r,child.attributes.c] = @getMinSpot(child.attributes.w,child.attributes.h)
+		# console.log 'GOT',child.attributes.r
+		child.attributes._offset = @state.offset
+		# console.log child.attributes.r,child.attributes.c
 		@state.children_map[child.attributes.key] = child
 	
 		@fillSpot(child)
@@ -350,8 +419,8 @@ class Grid extends Component
 	###
 	setChildren: (children)->
 		# @flushState()
-		for child,i in children
-			@addChild(child,i)
+		for i in [0...children.length]
+			@appendChild(children[i])	
 		@props.children = children
 		return true
 
@@ -361,24 +430,33 @@ class Grid extends Component
 	appendChildrenUpdate: (children)->
 		# append from last array length.
 		for i in [@props.children.length...children.length]
-			@addChild(children[i],i)
+			@appendChild(children[i])
 		
 		# when overwriting spots in a fixed grid, make sure empty spots are filled
 		if @props.fixed
 			@fillEmptySpots()
 		
 		@props.children = children #set the new children!
+		log @
 		return true
 	
 	# same as append but added to the beginning of the grid instead of the end.
 	prependChildrenUpdate: (children)->
-		@children = children
-		for i in [0...children.length-@props.children.length]
-			@addChild(children[i],-1)
+	
+		# console.log @
+		@state.scroll_up = true
+
+		# 
+		# prepend from 0 to difference between children lengths
+		for i in [children.length-@props.children.length-1...0]
+			@prependChild(children[i])
 		
 		# when overwriting spots in a fixed grid, make sure empty spots are filled
 		if @props.fixed
 			@fillEmptySpots()
+
+		# log 'prependchidrenupdate',@state.offset * @getLengthDim()
+		
 		
 		@props.children = children #set the new children!
 		return true
@@ -442,13 +520,6 @@ class Grid extends Component
 	getInnerSize: ()->
 		@getLengthDim() * @state.matrix.length + @props.endPadding + @props.startPadding
 
-
-
-	updateChildAttributes: (child)->
-		# child.attributes.r = @state.child_props[child.attributes.key].r
-		# child.attributes.c = @state.child_props[child.attributes.key].c
-		child.attributes.show = if (@props.fixed || !@props.animate) then true else @isChildAnimationVisible(child)
-		return child
 
 
 
@@ -533,55 +604,70 @@ class Grid extends Component
 	setDisplayChildren: ()=>
 		if @props.vert
 			outer_size = @_outer.clientHeight
-			outer_scroll = @_outer.scrollTop
+			outer_scroll = @_outer.scrollTop - @props.startPadding
 		else
 			outer_size = @_outer.clientWidth
-			outer_scroll = @_outer.scrollLeft			
+			outer_scroll = @_outer.scrollLeft - @props.startPadding
 
 		dim = @getLengthDim()
+		l = if !@state.matrix.length then 0 else @state.matrix.length-1
+		recalc_children = recalc_view = true
+
+		# current min/max visible row
+		r_min = _clamp(Math.floor( (outer_scroll) / dim), 0, l)
+		r_max = _clamp(Math.floor( (outer_scroll + outer_size) / dim), 0, l)
+		# console.log r_min,r_max
+
+		# recalculate rendered children
+		if r_min > @state.render_min && r_max < @state.render_max
+			recalc_children = false
+		else
+			@state.render_min = _clamp(Math.floor( (outer_scroll) / dim) - @props.bufferOffsetCells, 0, l)
+			@state.render_max = _clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.bufferOffsetCells+1, 0, l)
 
 
+		# update child visibility if animation is on.
+		if r_min > @state.view_min && r_max < @state.view_max
+			recalc_view = false
+		else
+			@state.view_min = _clamp(Math.floor( (outer_scroll) / dim) - @props.animationOffsetCellBeta, 0, l)
+			@state.view_max = _clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.animationOffsetCellBeta + 1, 0, l)
 
-		# current min row
-		r_start = _clamp(Math.round( (outer_scroll) / dim ) - 1, 0, @state.matrix.length-1)
 		
-		#current max row
-		r_end = _clamp(Math.round( (outer_scroll + outer_size) / dim ) + 1, 0, @state.matrix.length-1)
 
-
-		
-
-		if r_start > @state.row_min && r_end < @state.row_max
+		if recalc_children
+			@state.display_children = []
+			added = {}
+			# get children between the start row and end row and set them as the display children to pass to render.
+			for row in [@state.render_min...@state.render_max]
+				for key in @state.matrix[row]
+					if key == null
+						continue
+					child = @state.children_map[key[0]]
+					if added[key[0]] == undefined
+						added[key[0]] = true
+						child.attributes.r = row - key[1]
+						if child.attributes.r > @state.view_min && child.attributes.r < @state.view_max
+							child.attributes.show = true
+						else
+							child.attributes.show = false
+						if @state.scroll_up
+							child.attributes.top = true
+							@state.display_children.push child
+						else
+							child.attributes.top = false
+							@state.display_children.unshift child
+						
+			return true
+		else if recalc_view
+			for child in @state.display_children
+				if child.attributes.r > @state.view_min && child.attributes.r < @state.view_max
+					child.attributes.show = true
+				else
+					child.attributes.show = false
+			return true
+		else
 			return false
-
-		# the new min row
-		@state.row_min = _clamp(Math.round( (outer_scroll) / dim ) - @props.bufferOffsetCells, 0, @state.matrix.length-1)
-		
-		# the new  row
-		@state.row_max = _clamp(Math.round( (outer_scroll + outer_size) / dim ) + @props.bufferOffsetCells, 0, @state.matrix.length-1)
-		
-		
-		@state.display_children = []
-		added = []
-
-		
-		# get children between the start row and end row and set them as the display children to pass to render.
-		for row in [@state.row_min...@state.row_max]
-			for spot in @state.matrix[row]
-				if !@props.children[spot]
-					continue
-				if spot == -1
-					continue
-				if !(added[spot]?)
-					added[spot] = true
-					# if !@state.scroll_up
-					# 	@props.children[spot].attributes.top = true
-					@state.display_children.push @updateChildAttributes(@props.children[spot])
-					# else
-					# 	@props.children[spot].attributes.top = false
-					# 	@state.display_children.unshift(@updateChildAttributes(@props.children[spot]))
-		
-		return true
 
 
 
@@ -595,6 +681,10 @@ class Grid extends Component
 				@_outer.scrollTop *= diff
 			else
 				@_outer.scrollLeft *= diff
+
+		if @state.offset
+			@_outer.scrollTop += (@state.offset) * @getLengthDim()
+			@state.offset = 0
 
 
 	# initial mount
@@ -638,16 +728,18 @@ class Grid extends Component
 
 		outer_size = if @props.vert then @_outer.clientHeight else @_outer.clientWidth
 		scroll_pos = if @props.vert then @_outer.scrollTop else @_outer.scrollLeft
+		# scroll_pos += @props.startPadding
+
 		if !@_outer
 			return false
 
 		
 		dim = @getLengthDim()
-		offset = dim * @props.animationOffsetCellBeta
-		if child.attributes.r * dim + dim * child.attributes.h < scroll_pos - offset
+		offset = @props.startPadding
+		if (child.attributes.r * dim + dim * child.attributes.h) < scroll_pos - offset
 			return false
 
-		if child.attributes.r * dim > scroll_pos + outer_size + dim + offset
+		if child.attributes.r * dim > scroll_pos - dim + outer_size
 			return false
 
 		return true
@@ -730,7 +822,6 @@ class Grid extends Component
 
 	# render everything
 	render: ()=>
-
 		# calculate inner and outer props.
 		outer_props = @getOuterProps()
 		inner_props = @getInnerProps()
