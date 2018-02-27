@@ -1,36 +1,49 @@
 {h,Component} = require 'preact'
 
+
 DEFAULT_PROPS = 
 	w: 1
 	h: 1
-	show: yes
+	show: no
+	style: {}
 	ease: null
+	scale_start: 0.9
 
 
-###
-@GridItem class
-infinite scroll optimized tetris grid.
-###
 class GridItem extends Component
 	constructor: (props)->
 		super(props)
 		@state = 
-			hidden: false
+			animate: true
 			show: false
-			left: null
-			top: null
-		
+			mat: [
+				1,0,0,0
+				0,1,0,0
+				0,0,1,0
+				0,0,0,1
+			]
+
+		# @state.mat_str = 'matrix3d('+@state.mat.join(',')+')'
+
 		if props.w == 0 || props.h == 0
-			throw new Error 'invalid grid item w/h '+w+','+h
-
-		@style = {}
-
-	shouldComponentUpdate: (props)->
-		if @props.r != props.r || @props.c != props.c || @props.show != props.show || @context.vert != @state.vert || @context.dom != @state.dim
+			throw new Error 'Invalid grid item w/h ('+w+','+h+')'
+		
+	shouldComponentUpdate: (props,state)->
+		# console.log @__key
+		if props.show != @props.show || @props.r != props.r || @props.c != props.c || @props.w != props.w || @props.h != props.h
+			if @props.r != props.r || @props.c != props.c
+				# console.log 'animate = false'
+				@state.animate = false
+			else
+				@state.animate = true
+			# if @props.key != props.key
+			# 	@state.fresh = true
 			return true
-		else
-			return false
+		return false
+		# if props.show == @props.show && @context.dim == @state.dim && @props.w == props.w && @props.h == props.h && @props.c = props.c && @props.r == props.r && state.vert == @context.vert
+		# 	return false
 
+		# return true
 
 	getDim: ()->
 		d =  @context.dim
@@ -53,119 +66,87 @@ class GridItem extends Component
 			y:top
 			w:width
 			h:height
-
-
-	move: (x,y)->
-		# log 'MOVE'
-		clearTimeout @move_t
-		@move_t = setTimeout ()=>
-			@setState
-				transform: 'matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1) translate('+x+'px,'+y+'px)'
-		,0
-
-	show: (set,delay,xy)->
-		if @hide_t
-			clearTimeout(@hide_t)
-			@hide_t = null
-
-		@hide_t = setTimeout ()=>
-			if !@_item
-				return
-
-			@state.transition = 'transform '+(@props.ease || @context.ease)
-			@state.transform = 'matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1) translate('+xy.x+'px,'+xy.y+'px)'
-			@_item?.style.transition = @state.transition
-			@_item?.style.transform = @state.transform
-
-		,delay
-		@props.onShow?()
+			vert: height > width
 
 	link_ref: (e)=>
 		@_item = e
 
-	# shouldComponentUpdate: (props,state)->
-	# 	if props.show == @props.show && @context.dim == @state.dim && @props.w == props.w && @props.h == props.h && @props.c = props.c && @props.r == props.r
-	# 		return false
-
-	# 	return true
-
-	# componentWillMount: ()->
-	# 	log 'WILL MOUNT'
-
 	rand: =>
 		(-@context.variation + Math.random() * @context.variation*2 )
-		
-
 	
+	componentDidUpdate: ->
+		@state.animate = false
+		@state.show = @props.show
+
+	updateStyle: =>
+		@_item.style.transition = @getTransition(@state.dim,false)
+		@_item.style.transform = @getMatrix(@state.dim,false)
+		@_timer = null
+
+	componentWillUnmount: ->
+		clearTimeout @_timer
+
+	componentWillMount: ->
+		@state.animate = true
+
+	getMatrix: (dim,fresh)->
+		# if fresh
+		# 	scale_x = 0.7#!dim.vert && 0.0 || 0.6
+		# 	scale_y = 1.0#dim.vert && 0.0 || 0.6
+		# 	persp_y = 0.0001
+		# 	persp_z = 2.0
+		if fresh
+			a = 1.0
+			scale= 0.1
+			scale_xx = Math.cos(a)
+			scale_xz = Math.sin(a)
+			scale_zx = -Math.sin(a)
+			scale_zz = Math.cos(a)
+			# matrix3d(0.921061, 0.4, 0.389418, 0.002, 0, 1, 0, 0, -0.389418, 0, 0.921061, 0, 86, 186, 0, 1)
+			mat = [
+				scale_xx*scale,0.0,scale_xz*scale,0.000
+				0,1*scale,0,0
+				scale_zx*scale,0,scale_zz,0
+				dim.x,dim.y,0,1				
+			]
+		else
+			mat = [
+				1,0,0,0
+				0,1,0,0
+				0,0,1,0
+				dim.x,dim.y,0,1
+			]
+
+		return 'matrix3d('+mat.join(',')+')'
+
+
+
+	getTransition: (dim,fresh)->
+		if fresh
+			return ''
+		else
+			return 'transform '+@context.ease
+
+
+	getStyle: ->
+
+		fresh = @state.animate
+		dim = @state.dim = @getDim()
+		if fresh then @_timer = setTimeout @updateStyle,@rand()*200
+		visibility : @props.show && 'initial' || 'hidden'
+		transition : @state.animate && @getTransition(dim,fresh) || ''
+		transform : @getMatrix(dim,fresh)
+		height : dim.h
+		width : dim.w 
+		
 	render: ()->
-		xy = @getDim()
-		# console.log xy,@props.r
-		
-		# @state.transform = 'matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1) translate('+xy.x+'px,'+xy.y+'px)'
-		
-		# log xy.x,xy.y
-		
-
-
-		@state.dim = @context.dim
-		@state.vert = @context.vert
-
-		if @state.show != @props.show
-			@state.show = @props.show
-
-			if @state.show == true && @context.animate == false
-				@state.transform = 'translate('+xy.x+'px,'+xy.y+'px)'
-			else if @state.show == true
-				if (@context.vert && @context.dim*@props.w > @context.length_dim*@props.h) || (!@context.vert && @context.dim*@props.w < @context.length_dim*@props.h)
-					@state.transform = 'matrix3d('+(@context.variation && 0.6 || 0.9)+',0,0,'+(@rand()*0.002)+',0.00,0,1,'+(@props.top && '-' || '')+'0.003,0,-1,0,0,0,0,0,1) translate('+xy.x+'px,'+xy.y+'px)'
-				else
-					@state.transform = 'matrix3d(0,0,1,'+(@rand()*0.002)+',0.00,0.6,0,0.001,-1,0,0,0,0,0,0,1) translate('+xy.x+'px,'+xy.y+'px)'
-
-				@state.transition = ''
-
-				@show(false,@rand()*50,xy)
-		else
-			# log @state.left == left,@state.top == top
-			if (xy.x != @state.x || @state.y != xy.y) && @state.y != null && @state.x != null
-				@move(xy.x,xy.y)
-			
-
-			
-		@state.i = @props.i
-
-
-		@state.x = xy.x
-		@state.y = xy.y
-
-		if xy.w != @state.w || xy.h != @state.h
-			transition = ''
-			
-		else
-			transition = @state.transition
-
-		@state.w = xy.w
-		@state.h = xy.h
-		# log @state.transform
-
-
-
+		# console.log @_timer
 		h 'div',
-			className: '-i-grid-item-outer '+(@props.class||@props.className||@props.outerClassName||'')
+			className: '-i-grid-item '+(@props.className||'')
 			ref: @link_ref
-			key: @props.i
-			style:
-				visibility : !@props.show && 'hidden' || 'initial'
-				transition : @state.transition
-				transformOrigin: "#{xy.x + xy.w/2}px #{xy.y + xy.h/2}px"
-				transform : @state.transform
-				height : xy.h
-				width : xy.w
-				zIndex: @props.w*@props.h
+			style: Object.assign({},@props.style,@getStyle())
 			@props.children
 
 
-
-
 GridItem.defaultProps = DEFAULT_PROPS
-
 module.exports = GridItem

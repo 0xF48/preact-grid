@@ -65,7 +65,7 @@ class Counter extends Component
 		@state =
 			total: 0
 	update: =>
-		total = document.body.querySelectorAll('.-i-grid-item-outer ').length
+		total = document.body.querySelectorAll('.-i-grid-item').length
 		if @state.total != total
 			@setState
 				total: total
@@ -93,6 +93,7 @@ class LargeGridTest extends Component
 			vertical: yes
 			key: rc()+rc()
 		@list = []
+		@appendItems()
 
 	appendItems: ()=>
 		for i in [0...200]
@@ -125,13 +126,14 @@ class LargeGridTest extends Component
 					l + 200 - i
 
 	onMaxReached: =>
-		# setTimeout =>
-		# 	if @list.length > 500
-		# 		return @setState
-		# 			max_reached: yes
-		# 	@appendItems()
-		# 	@forceUpdate()
-		# ,@state.use_timeout && 1000 || 0
+		log 'max reached'
+		setTimeout =>
+			if @list.length > 5000
+				return @setState
+					max_reached: yes
+			@appendItems()
+			@forceUpdate()
+		,@state.use_timeout && 1000 || 0
 
 	onMinReached: =>
 		log 'min reached'
@@ -157,8 +159,8 @@ class LargeGridTest extends Component
 				vert: @state.vertical
 				prepend: @state.prepend
 				animate: @state.use_animate
-				bufferOffsetCells: 2
-				animationOffsetCellBeta: 1
+				bufferOffsetCells: 0
+				animationOffsetCellBeta: 0
 				variation: 1
 				postChildren: h LoadIcon,
 					vert: @state.vertical
@@ -210,7 +212,7 @@ class LargeGridTest extends Component
 				center: yes
 				vert: yes
 				dim: DIM
-				'Scrollable grid with stickies and timeout loader (1s). When grid key is changed, the grid is fully recalculated.'
+				# 'Scrollable grid with stickies and timeout loader (1s). When grid key is changed, the grid is fully recalculated.'
 				options
 			h Slide,
 				className: 'grid-wrap'
@@ -290,7 +292,7 @@ class Test extends Component
 			size: 1
 			dim: 40
 			variation: 0
-			bufferOffsetCells: 5
+			bufferOffsetCells: 2
 			animate: false
 			@scrollable_list_items
 		
