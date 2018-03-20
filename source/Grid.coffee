@@ -6,13 +6,14 @@ DEFAULT_PROPS =
 	vert: yes #is the grid vertical?
 	className: null #outer wrapper className
 	fixed: no  #is the grid fixed? if so the grid will fill up and any added children afterwards will replace the ones that were added at the beginning.
+	bufferPadCells: 0
 	bufferOffsetCells: 0 #how many height units to buffer items for when updating the display children. depending on the size of your grid you may need more buffering to avoid extra renders. when there are many buffered children, the total div count increases but the calculations to diff the children decreases.
-	animationOffsetCellBeta: 0 #when to start animating children in (if they are x height units below the screen) adjust this based on scroll speed relative to how many units there.
+	viewOffsetCells: 0 #when to start animating children in (if they are x height units below the screen) adjust this based on scroll speed relative to how many units there.
 	postChildren: null #add extra children after all the display children have been added.
 	ease: '0.4s cubic-bezier(.29,.3,.08,1)' #easing for fade in effect on each child.
 	size: 4 #grid size across≥
-	endPadding: 100 # padding to add to the bottom of the grid (when appending and you want to display a loader)
-	startPadding: 100 # padding to add to the top of the grid (when prepending and you want to display a loader)
+	endPadding: 0 # padding to add to the bottom of the grid (when appending and you want to display a loader)
+	startPadding: 0 # padding to add to the top of the grid (when prepending and you want to display a loader)
 	length: 5 # the length of the grid when it is fixed.
 	animate: yes #do animations?
 	variation: 1 #animation variation amount for each child.
@@ -72,6 +73,7 @@ class Grid extends Component
 		animate: @props.animate
 		size: @props.size
 		length: @props.length
+		scroll_up: @state.scroll_up
 		dim: @getDim()
 		ease: @props.ease
 		ease_dur: @props.ease_dur
@@ -102,26 +104,6 @@ class Grid extends Component
 
 
 
-
-	# removeIndex: (r,c,h,w)->
-	# 	arr = @state.matrix
-	# 	for row in [r...r+h]
-	# 		for col in [c...c+w]
-	# 			child = @state.children_map[arr[row][col]]
-				
-	# 			if index == -1
-	# 				continue
-
-	# 			c_w = child.attributes.w
-	# 			c_h = child.attributes.h
-	# 			c_r = child.attributes.r
-	# 			c_c = child.attributes.c
-	# 			delete @state.children_map[arr[row][col]]
-
-	# 			# log c_w,c_h,c_r,c_c
-	# 			for row2 in [c_r...c_r+c_h]
-	# 				for col2 in [c_c...c_c+c_w]
-	# 					arr[row2][col2] = -1
 
 
 	# findHiddenChild: (w,h)->
@@ -165,36 +147,57 @@ class Grid extends Component
 
 
 
+
+	removeIndex: (r,c,h,w)->
+		for row in [r...r+h]
+			for col in [c...c+w]
+				if @state.matrix[row][col] == null
+					continue
+				child = @state.children_map[@state.matrix[row][col][0]]
+
+				
+				if !child
+					throw new Error 'tried to remove index of non existant child, key:'+arr[row][col][0],
+
+				c_w = child.attributes.w
+				c_h = child.attributes.h
+				c_r = child.attributes.r
+				c_c = child.attributes.c
+
+				console.log c_w,c_h,c_r,c_c
+				
+				# log c_w,c_h,c_r,c_c
+				for row2 in [c_r...c_r+c_h]
+					for col2 in [c_c...c_c+c_w]
+						@state.matrix[row2][col2] = null
+
 	
-	###
-	@freeSpot method
-	free up a parti
-	###	
-	freeSpot: (w,h,arr)->
+	# free a particular spot.
+	freeSpot: (w,h)->
 		
 		if @props.freeSpot
-			return @props.freeSpot(w,h,arr)
+			return @props.freeSpot(w,h)
 		ranks = []
 
-		for row in [0...arr.length]
-			for col in [0...arr[row].length]
+		for row in [0...@state.matrix.length]
+			for col in [0...@state.matrix[row].length]
 				rank = 0
 				bad_spot = false
 				r_obj = {}
 				r_obj.n_count = 0
 				r_obj.rank = 0
 				for c_row in [row...row+h]
-					if !arr[c_row]?
+					if !@state.matrix[c_row]?
 						bad_spot = true
 						break
 					for c_col in [col...col+w]
-						if !arr[c_row][c_col]?
+						if !@state.matrix[c_row][c_col]?
 							bad_spot = true
 							break
-						if arr[c_row][c_col] == null
+						if @state.matrix[c_row][c_col] == null
 							r_obj.n_count++
 							continue
-						index = arr[c_row][c_col]
+						index = @state.matrix[c_row][c_col]
 						if r_obj[index]
 							continue
 						r_obj.n_count++
@@ -221,7 +224,7 @@ class Grid extends Component
 		# log ranks[0].r,h
 		# log ranks[0].c,w
 
-		@removeIndex(ranks[0].r,ranks[0].c,h,w,arr)
+		@removeIndex(ranks[0].r,ranks[0].c,h,w)
 	
 	
 
@@ -489,7 +492,7 @@ class Grid extends Component
 	# recalculate grid when items have changed.
 	updateGrid: (oldProps,newProps)->
 
-		prepend_condition = newProps.children[0] && oldProps.children[0] && newProps.children[0].key != oldProps.children[0].key
+		prepend_condition = !newProps.fixed && newProps.children[0] && oldProps.children[0] && newProps.children[0].key != oldProps.children[0].key
 		
 	
 		# append/prepend new children
@@ -523,10 +526,9 @@ class Grid extends Component
 	setFixedDisplayChildren: ()=>
 		@state.display_children = []
 		added = {}
-		arr = @state.matrix
 		for row in [0...@props.length]
 			for col in [0...@props.size]
-				index = arr[row][col]
+				index = @state.matrix[row][col]
 				if index == -1
 					continue
 				if added[index]
@@ -556,24 +558,34 @@ class Grid extends Component
 		# current min/max visible row
 		r_min = Math.clamp(Math.floor( (outer_scroll) / dim), 0, l)
 		r_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim), 0, l)
+
+		if @state.scroll_up
+			r_min -= @props.bufferPadCells
+		else
+			r_max += @props.bufferPadCells
 		# console.log r_min,r_max
 
 		# recalculate rendered children
-		if r_min > @state.render_min && r_max < @state.render_max
+		if r_min >= @state.render_min && r_max <= @state.render_max
 			recalc_children = false
 		else
-			@state.render_min = Math.clamp(Math.floor( (outer_scroll) / dim) - @props.bufferOffsetCells, 0, l)
-			@state.render_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.bufferOffsetCells+1, 0, l)
+			if @state.scroll_up
+				@state.render_min = Math.clamp(Math.floor( (outer_scroll) / dim) - @props.bufferOffsetCells, 0, l)
+				@state.render_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim), 0, l)
+			else
+				@state.render_min = Math.clamp(Math.floor( (outer_scroll) / dim), 0, l)
+				@state.render_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.bufferOffsetCells,0,l)
+
 
 
 		# update child visibility if animation is on.
-		if r_min > @state.view_min && r_max < @state.view_max
+		if r_min > @state.view_min && r_max < @state.view_max || @props.animate == false
 			recalc_view = false
 		else
-			@state.view_min = Math.clamp(Math.floor( (outer_scroll) / dim) - @props.animationOffsetCellBeta, 0, l)
-			@state.view_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.animationOffsetCellBeta + 1, 0, l)
+			@state.view_min = Math.clamp(Math.floor( (outer_scroll) / dim) - @props.viewOffsetCells, 0, l)
+			@state.view_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.viewOffsetCells + 1, 0, l)
 
-		
+		# console.log r_min,r_max,'| R:',@state.render_min,@state.render_max,recalc_children,'V:',@state.view_min,@state.view_max,recalc_view
 
 		if recalc_children
 			window.g = @
@@ -581,7 +593,7 @@ class Grid extends Component
 			@state.display_children = []
 			added = {}
 			# get children between the start row and end row and set them as the display children to pass to render.
-			for row in [@state.render_min...@state.render_max]
+			for row in [@state.render_min..@state.render_max]
 				for key in @state.matrix[row]
 					if key == null
 						continue
@@ -590,11 +602,13 @@ class Grid extends Component
 						added[key[0]] = true
 						child.attributes.r = row - key[1]
 
-
-						if child.attributes.r+child.attributes.h >= @state.view_min && child.attributes.r <= @state.view_max
-							child.attributes.show = true
+						if @props.animate
+							if child.attributes.r+child.attributes.h >= @state.view_min && child.attributes.r <= @state.view_max
+								child.attributes.visible = true
+							else
+								child.attributes.visible = false
 						else
-							child.attributes.show = false
+							child.attributes.visible = true
 
 						if @state.scroll_up
 							# child.attributes.top = true
@@ -607,10 +621,10 @@ class Grid extends Component
 		else if recalc_view
 			# console.log 'recalc view children',scroll
 			for child in @state.display_children
-				if child.attributes.r > @state.view_min && child.attributes.r < @state.view_max
-					child.attributes.show = true
+				if child.attributes.r+child.attributes.h >= @state.view_min && child.attributes.r <= @state.view_max
+					child.attributes.visible = true
 				else
-					child.attributes.show = false
+					child.attributes.visible = false
 			return true
 		return false
 
@@ -618,7 +632,7 @@ class Grid extends Component
 		s = s || 0
 		if @props.vert && @_outer.scrollTop != s
 			console.log 'SET SCROLL',s
-			if @_outer.scrollHeight > s
+			if @_outer.scrollHeight < s
 				@_inner.style.height = s + @_outer.clientHeight
 			@_outer.scrollTop = s
 			@_outer.scrollTop = s
@@ -679,34 +693,6 @@ class Grid extends Component
 		@_l_dim = @getLengthDim()
 		@_rect = @_outer.getBoundingClientRect()
 		
-
-
-	#check if child is visible for the animation based on its size and position relative to the outer container and the propery animationOffsetCellBeta
-	# isChildAnimationVisible: (child)->
-
-	# 	# since we only check the visibility of children which are already in the buffer, we can just set their visibility to true if we are not animating.
-	# 	if @props.animate == false
-	# 		return true
-
-
-	# 	outer_size = if @props.vert then @_outer.clientHeight else @_outer.clientWidth
-	# 	scroll_pos = if @props.vert then @_outer.scrollTop else @_outer.scrollLeft
-	# 	# scroll_pos += @props.startPadding
-
-	# 	if !@_outer
-	# 		return false
-
-		
-	# 	dim = @getLengthDim()
-	# 	offset = @props.startPadding
-	# 	if (child.attributes.r * dim + dim * child.attributes.h) < scroll_pos - offset
-	# 		return false
-
-	# 	if child.attributes.r * dim > scroll_pos - dim + outer_size
-	# 		return false
-
-	# 	return true
-	
 
 	# ref to outer div
 	outer_ref: (e)=>	

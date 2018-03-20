@@ -12,7 +12,6 @@
 	-webkit-overflow-scrolling: touch;
 
 	.-i-grid-item{
-		// transform-origin: left;
 		&::before {
 			will-change: transform;
 		}
@@ -20,6 +19,7 @@
 		position: absolute;
 		box-sizing: border-box;
 		backface-visibility: hidden;
+		-webkit-backface-visibility: hidden;
 	}
 
 	.-i-grid-inner{
