@@ -9,7 +9,7 @@ DEFAULT_PROPS =
 	className: null #outer wrapper classNamea
 	fixed: no  #is the grid fixed? if so the grid will fill up and any added children afterwards will replace the ones that were added at the beginning.
 	bufferPadCells: 0
-	bufferOffsetCells: 0 #how many height units to buffer items for when updating the display children. depending on the size of your grid you may need more buffering to avoid extra renders. when there are many buffered children, the total div count increases but the calculations to diff the children decreases.
+	viewOffsetCells:  0
 	viewPadCells: 0 #when to start animating children in (if they are x height units below the screen) adjust this based on scroll speed relative to how many units there.
 	postChildren: null #add extra children after all the display children have been added.
 	ease: '0.4s cubic-bezier(.29,.3,.08,1)' #easing for fade in effect on each child.
@@ -184,6 +184,19 @@ class Grid extends Component
 			
 
 	
+
+
+
+
+
+
+
+
+
+
+
+
+
 	#calculate which children get rendered based on scroll position and container/child size. The offset in units is managed with bufferOffsetCells
 	setDisplayChildren: ()=>
 		scroll = @updateScrollPosition()
@@ -201,37 +214,38 @@ class Grid extends Component
 		recalc_children = recalc_view = true
 
 		# current min/max visible row
-		r_min = Math.clamp(Math.floor( (outer_scroll) / dim), 0, l)
-		r_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim), 0, l)
+		r_min = Math.clamp(Math.floor( (outer_scroll) / dim) - @props.viewOffsetCells, 0, l) 
+		r_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.viewOffsetCells, 0, l) 
 
 
 
 	
-		# recalculate rendered children
+		# calculate the min and max rows for children that need to be rendered to DOM
 		if r_min >= @state.render_min && r_max <= @state.render_max && r_max != 0
 			recalc_children = false
 		else
 			if @state.scroll_up
-				@state.render_min = Math.clamp(Math.floor( (outer_scroll) / dim) - @props.bufferPadCells, 0, l)
-				@state.render_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim), 0, l)
+				@state.render_min = Math.clamp(r_min - @props.bufferPadCells,0,l)
+				@state.render_max = r_max
 			else
-				@state.render_min = Math.clamp(Math.floor( (outer_scroll) / dim), 0, l)
-				@state.render_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.bufferPadCells,0,l)
+				@state.render_min = r_min
+				@state.render_max = Math.clamp(r_max + @props.bufferPadCells,0,l)
 
 
-		# update child visibility if animation is on.
+		# calculate the min and max rows for children that need to be visible.
 		if r_min >= @state.view_min && r_max < @state.view_max || @props.animate == false
 			recalc_view = false
 		else
-			@state.view_min = Math.clamp(Math.floor( (outer_scroll) / dim) - @props.viewPadCells, 0, l)
-			@state.view_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.viewPadCells + 1, 0, l)
+			if @state.scroll_up
+				@state.view_min = Math.clamp(r_min - @props.viewPadCells,0,l)
+				@state.view_max = r_max
+			else
+				@state.view_min = r_min 
+				@state.view_max = Math.clamp(r_max + @props.viewPadCells,0,l)
 
-
-
+		# log @state.render_min,@state.render_max
+		# recalculate all children that need to be rendered.
 		if recalc_children
-			
-			window.g = @
-			
 			@state.display_children = []
 			added = {}
 			# get children between the start row and end row and set them as the display children to pass to render.
@@ -245,16 +259,12 @@ class Grid extends Component
 					x = tile_arr[1]
 					y = tile_arr[2]
 
-					
-
 					if added[child.key] == undefined
 						added[child.key] = true
-						child.attributes.r = row - y #update the row of the child (row is offset when grid elements are prepended)
+						child.attributes.r = row - y 
 						child.attributes.c = col - x
-
-
 						if @props.animate
-							if child.attributes.r+child.attributes.h > @state.view_min && child.attributes.r < @state.view_max
+							if row >= @state.view_min && row <= @state.view_max
 								child.attributes.visible = true
 							else
 								child.attributes.visible = false
@@ -262,23 +272,30 @@ class Grid extends Component
 							child.attributes.visible = true
 
 						if @state.scroll_up
-							
 							@state.display_children.push child
-						else
-							
-							@state.display_children.unshift child
-						
+						else 
+							@state.display_children.unshift child			
 			return true
+		
+		# recalculate rendered children to see if they need to be visible or not
 		else if recalc_view
-			
 			for child in @state.display_children
-				if child.attributes.r+child.attributes.h > @state.view_min && child.attributes.r < @state.view_max
-				
+				if child.attributes.r+child.attributes.h > @state.view_min && child.attributes.r <= @state.view_max
 					child.attributes.visible = true
 				else
 					child.attributes.visible = false
 			return true
 		return false
+
+	
+
+
+
+
+
+
+
+
 
 	setScroll: (s)->
 		s = s || 0

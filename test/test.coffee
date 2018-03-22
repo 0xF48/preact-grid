@@ -291,79 +291,80 @@ class Test extends Component
 		# console.log 'test'
 
 
-		# scrollable_list = h Grid,
-		# 	className: 'grid'
-		# 	size: 1
-		# 	dim: 40
-		# 	variation: 0
-		# 	bufferOffsetCells: 4
-		# 	bufferPadCells: 4
-		# 	viewOffsetCells: 4
-		# 	animate: false
-		# 	@scrollable_list_items
+		scrollable_list = h Grid,
+			className: 'grid'
+			size: 1
+			dim: 40
+			variation: 0
+			viewOffsetCells: 4
+			bufferPadCells: 1
+			viewPadCells: 0
+			animate: false
+			@scrollable_list_items
 		
 
 
-		# scrollable_sticky_list = h Grid,
-		# 	className: 'grid'
-		# 	size: 1
-		# 	dim: 100
-		# 	variation: 0
-		# 	@scrollable_slist_items
+		scrollable_sticky_list = h Grid,
+			className: 'grid'
+			size: 1
+			dim: 100
+			variation: 0
+			@scrollable_slist_items
 		
-		# scrollable_sticky_grid = h Grid,
-		# 	className: 'grid'
-		# 	size: 4
-		# 	variation: 1
-		# 	dim: 100
-		# 	@scrollable_sgrid_items
+		scrollable_sticky_grid = h Grid,
+			className: 'grid'
+			size: 4
+			variation: 1
+			dim: 100
+			@scrollable_sgrid_items
 
 
 		
 		h Slide,
 			className: 'main'
 			vert: yes
-			h LargeGridTest
-			# h Slide,
-			# 	center: yes
-			# 	dim: DIM
-			# 	h Counter
+			
+			h Slide,
+				center: yes
+				dim: DIM
+				h Counter
 
-			# h Slide,
-			# 	vert: no
-			# 	h Slide,
-			# 		vert: yes
-			# 		h Slide,
-			# 			center: yes
-			# 			dim: DIM
-			# 			'scrollable list with stickies'
-			# 		h Slide,
-			# 			className: 'grid-wrap'
-			# 			scrollable_list
+			h Slide,
+				vert: no
+				h Slide,
+					vert: yes
+					h Slide,
+						center: yes
+						dim: DIM
+						'scrollable list with stickies'
+					h Slide,
+						className: 'grid-wrap'
+						scrollable_list
+				h LargeGridTest
 			
 
 					
 
-			# h Slide,
-			# 	vert: no
-			# 	h Slide,
-			# 		vert: yes
-			# 		h Slide,
-			# 			center: yes
-			# 			dim: DIM
-			# 			'scrollable list without stickies'
-			# 		h Slide,
-			# 			className: 'grid-wrap'
-			# 			scrollable_sticky_list
-			# 	h Slide,
-			# 		vert: yes
-			# 		h Slide,
-			# 			center: yes
-			# 			dim: DIM
-			# 			'scrollable grid without stickies'
-			# 		h Slide,
-			# 			className: 'grid-wrap'
-			# 			scrollable_sticky_grid
+			h Slide,
+				vert: no
+				h Slide,
+					vert: yes
+					h Slide,
+						center: yes
+						dim: DIM
+						'scrollable list without stickies'
+					h Slide,
+						className: 'grid-wrap'
+						scrollable_sticky_list
+				h Slide,
+					vert: yes
+					h Slide,
+						center: yes
+						dim: DIM
+						'scrollable grid without stickies'
+					h Slide,
+						className: 'grid-wrap'
+						scrollable_sticky_grid
 
 
 @test_el = render(h(Test),document.body,@test_el)

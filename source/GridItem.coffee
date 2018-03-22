@@ -34,7 +34,7 @@ class GridItem extends Component
 				@show()			
 		
 		else if @_item.parentNode.clientWidth != @state.pw && @state.pw != 0
-			log 'resize'
+			# log 'resize'
 			@state.pw = @_item.parentNode.clientWidth
 			setTimeout @resize,0
 
