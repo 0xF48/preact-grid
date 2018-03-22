@@ -1,6 +1,6 @@
 {
   "name": "preact-grid",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "💠 Preact Infinite Scrolling Tile Grid",
   "main": "index.js",
   "repository": {
@@ -14,6 +14,16 @@
   },
   "author": "arxii",
   "license": "ISC",
+  "peerDependencies": {
+    "preact": "^8.2.7",
+    "webpack": "*",
+    "coffeescript": "^2.2.2",
+    "less": "*",
+    "css-loader": "*",
+    "less-loader": "*",
+    "style-loader": "*",
+    "coffee-loader": "*"
+  },
   "devDependencies": {
     "coffee-loader": "^0.9.0",
     "coffeescript": "^2.2.2",
