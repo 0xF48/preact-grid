@@ -8,9 +8,10 @@ DEFAULT_PROPS =
 	vert: yes #is the grid vertical?
 	className: null #outer wrapper classNamea
 	fixed: no  #is the grid fixed? if so the grid will fill up and any added children afterwards will replace the ones that were added at the beginning.
-	bufferPadCells: 0
-	viewOffsetCells:  0
-	viewPadCells: 0 #when to start animating children in (if they are x height units below the screen) adjust this based on scroll speed relative to how many units there.
+	renderRowsPad: 0
+	viewRowsOffset:  0
+	appendRowsCount: 5
+	viewRowsPad: 0 #when to start animating children in (if they are x height units below the screen) adjust this based on scroll speed relative to how many units there.
 	postChildren: null #add extra children after all the display children have been added.
 	ease: '0.4s cubic-bezier(.29,.3,.08,1)' #easing for fade in effect on each child.
 	size: 4 #grid size across≥
@@ -33,6 +34,9 @@ EVENT_REGEX = new RegExp('^on[A-Z]')
 class Grid extends Component
 	constructor: (props)->
 		super(props)
+		if @props.appendRowsCount == 0 || @size == 0
+			throw new Error 'Grid invalid parameters. @props.appendRowsCount == 0 || @size == 0'
+		
 		@state =
 			display_children: [] # the display children.
 			rows_added: 0
@@ -42,6 +46,7 @@ class Grid extends Component
 			render_max: null # the max row we need to be at to rerender the grid with new children
 			# view_min: null # the min row we need to be at to rerender the grid with updated children props.
 			# view_max: null # the max row we need to be at to rerender the grid with updated children props.
+
 
 		# build the matrix if its fixed since we wont be adding any more rows.
 		@_grid = new TileGrid
@@ -87,7 +92,7 @@ class Grid extends Component
 			item: child
 
 		while !@_grid.addTile(tile,@_grid.full.x2,@_grid.x2,@_grid.full.y2,@_grid.y2)
-			@_grid.pad(0,0,0,10)
+			@_grid.pad(0,0,0,@props.appendRowsCount)
 
 
 
@@ -100,7 +105,7 @@ class Grid extends Component
 		
 		while !@_grid.addTile(tile,0,@_grid.x2,@_grid.full.y1,0)
 			@_grid.pad(0,0,10,0)
-			@state.rows_added += 10
+			@state.rows_added += @props.appendRowsCount
 
 
 
@@ -214,8 +219,8 @@ class Grid extends Component
 		recalc_children = recalc_view = true
 
 		# current min/max visible row
-		r_min = Math.clamp(Math.floor( (outer_scroll) / dim) - @props.viewOffsetCells, 0, l) 
-		r_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.viewOffsetCells, 0, l) 
+		r_min = Math.clamp(Math.floor( (outer_scroll) / dim) - @props.viewRowsOffset, 0, l) 
+		r_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.viewRowsOffset, 0, l) 
 
 
 
@@ -225,11 +230,11 @@ class Grid extends Component
 			recalc_children = false
 		else
 			if @state.scroll_up
-				@state.render_min = Math.clamp(r_min - @props.bufferPadCells,0,l)
+				@state.render_min = Math.clamp(r_min - @props.renderRowsPad,0,l)
 				@state.render_max = r_max
 			else
 				@state.render_min = r_min
-				@state.render_max = Math.clamp(r_max + @props.bufferPadCells,0,l)
+				@state.render_max = Math.clamp(r_max + @props.renderRowsPad,0,l)
 
 
 		# calculate the min and max rows for children that need to be visible.
@@ -237,11 +242,11 @@ class Grid extends Component
 			recalc_view = false
 		else
 			if @state.scroll_up
-				@state.view_min = Math.clamp(r_min - @props.viewPadCells,0,l)
+				@state.view_min = Math.clamp(r_min - @props.viewRowsPad,0,l)
 				@state.view_max = r_max
 			else
 				@state.view_min = r_min 
-				@state.view_max = Math.clamp(r_max + @props.viewPadCells,0,l)
+				@state.view_max = Math.clamp(r_max + @props.viewRowsPad,0,l)
 
 		# log @state.render_min,@state.render_max
 		# recalculate all children that need to be rendered.

@@ -103,14 +103,13 @@ class LargeGridTest extends Component
 				w: Math.floor(1+rand()*2)
 				h: Math.floor(1+rand()*2)
 				key: @list.length
-				h 'div',
-					style:
-						width: '100%'
-						height: '100%'
-						background: "rgb(#{c-100},#{c},#{c}"
-					className: 'grid-item'
+				h Slide,
 					center: yes
+					style: 
+						color: 'black'
+						background: "rgb(#{c-100},#{c},#{c}"
 					@list.length
+				
 
 	# prependItems: ()=>
 	# 	l = @list.length
@@ -129,13 +128,13 @@ class LargeGridTest extends Component
 
 	onMaxReached: =>
 		log 'max reached'
-		# setTimeout =>
-			# if @list.length > 5000
-			# 	return @setState
-			# 		max_reached: yes
-		@appendItems()
-		@forceUpdate()
-		# ,(@state.use_timeout && 10000 || 0)
+		setTimeout =>
+			if @list.length > 1000
+				return @setState
+					max_reached: yes
+			@appendItems()
+			@forceUpdate()
+		,(@state.use_timeout && 1000 || 0)
 
 	onMinReached: =>
 		log 'min reached'
@@ -158,19 +157,25 @@ class LargeGridTest extends Component
 				className: 'grid'
 				key: @state.key
 				size: 8
-				# fixed: yes
-				# ease: '0.4s ease'
 				vert: @state.vertical
 				prepend: @state.prepend
 				animate: @state.use_animate
-				bufferPadCells: 4
-				viewPadCells: 0
+				viewRowsOffset: 2
+				renderRowsPad: 4
+				viewRowsPad: 0
 				variation: 1
-				postChildren: h LoadIcon,
-					vert: @state.vertical
-					stop: @state.max_reached
+				endPadding: 40
+				postChildren: h Slide,
+					style:
+						position: 'absolute'
+						bottom: 0
+						left: 0
+					height: 40
+					h LoadIcon,
+						stop: @state.max_reached
 				@list
-		
+
+							
 		options = h Slide,
 			center: yes
 			className: 'opts'
@@ -296,9 +301,9 @@ class Test extends Component
 			size: 1
 			dim: 40
 			variation: 0
-			viewOffsetCells: 4
-			bufferPadCells: 1
-			viewPadCells: 0
+			viewRowsOffset: 4
+			renderRowsPad: 1
+			viewRowsPad: 0
 			animate: false
 			@scrollable_list_items
 		
@@ -315,6 +320,7 @@ class Test extends Component
 			className: 'grid'
 			size: 4
 			variation: 1
+
 			dim: 100
 			@scrollable_sgrid_items
 
