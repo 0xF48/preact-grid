@@ -4,7 +4,7 @@
 DEFAULT_PROPS = 
 	w: 1
 	h: 1
-	show: no
+	visible: false
 	style: {}
 	ease: null
 	scale_start: 0.9
@@ -15,27 +15,53 @@ class GridItem extends Component
 	constructor: (props)->
 		super(props)
 		@state = 
-			final: false
-			show: false
-			post_final: false
-
-		# console.log 'consruct',@props.r
-			
-
-		# @state.mat_str = 'matrix3d('+@state.mat.join(',')+')'
+			visible: false
+			update: false
+			pw: 0
 
 		if props.w == 0 || props.h == 0
 			throw new Error 'Invalid grid item w/h ('+w+','+h+')'
-		
+
+
 	shouldComponentUpdate: (props,state)->
-		# console.log @__key
-		if props.visible != @props.visible || @props.r != props.r || @props.c != props.c || @props.w != props.w || @props.h != props.h 
-			if props.r != @props.r
-				# console.log 'POST FINAL'
-				@state.post_final = true
-			return true
+		if !@_item || !@_item.parentNode then return false
+
+		
+		if @props.visible != props.visible
+			if props.visible == false
+				@hide()
+			else if props.visible == true
+				@show()			
+		
+		else if @_item.parentNode.clientWidth != @state.pw && @state.pw != 0
+			log 'resize'
+			@state.pw = @_item.parentNode.clientWidth
+			setTimeout @resize,0
+
+
 		return false
-	
+
+
+	hide: =>
+		@_item.style.visibility = 'hidden'
+
+	show: =>
+		if !@_item
+			return
+		@state.visible = true
+		@_item.style.visibility = ''
+		@_item.style.transition = @getTransition()
+		@_item.style.transform = @endTransform()
+
+	resize: =>
+		@state.dim = @getDim()
+		@_item.style.transition = ''
+		@_item.style.transform = @endTransform()
+		@_item.style.width = @state.dim.w
+		@_item.style.height = @state.dim.h
+
+
+
 
 	getDim: ()->
 		d =  @context.dim
@@ -51,58 +77,52 @@ class GridItem extends Component
 			top = @props.c*d
 			height  = d*@props.w
 			left = @props.r * ld + @context.startPadding
-			width = @props.h * ld 
+			width = @props.h * ld
+
+
+		if height > width || (height == width && @rand()>0)
+			vert = true
+		else
+			vert = false
 
 		return 
 			x:left
 			y:top
 			w:width
 			h:height
-			vert: height > width
+			vert: vert
+
 
 	link_ref: (e)=>
 		@_item = e
 
+
 	rand: =>
 		(-@context.variation + Math.random() * @context.variation*2 )
 
-	rand_bool: ->
-		Math.random() > .5
-	
-	componentDidUpdate: ->
-		@postRender()
 
 	componentDidMount: ->
-		@postRender()
-
-	postRender: ->
-		if !@state.final && @props.visible
-			@_timer = setTimeout @updateStyle,60+25*@rand()
-		@state.final = true	
+		@state.pw = @_item.parentNode.clientWidth
+		clearTimeout @show
+		if @props.visible != @state.visible && @props.visible == true
+			setTimeout @show,50+@rand()*50
 
 
-	updateStyle: =>
-		@_item.style.transition = @getTransition()
-		@_item.style.transform = @getMatrix()
-		@_timer = null
+
 
 
 	componentWillUnmount: ->
-		clearTimeout @_timer
+		@state.visible = false
+		clearTimeout @show
 
-
-	componentWillMount: ->
-		@state.animate = @context.animate
-
-
-	startMatrixString: ()->
+	startTransform: ()->
 		a = @context.scroll_up && (Math.PI/2 + 0.3) || (-Math.PI/2 - 0.3)
-		scale= 0.65 + @rand()*.1
+		scale= 0.5 + @rand()*.2
 		scale_xx = Math.floor(Math.cos(a)*100)/100
 		scale_xz =  Math.floor(Math.sin(a)*100)/100
 		scale_zx = - Math.floor(Math.sin(a)*100)/100
 		scale_zz =  Math.floor(Math.cos(a)*100)/1000
-		# matrix3d(0.921061, 0.4, 0.389418, 0.002, 0, 1, 0, 0, -0.389418, 0, 0.921061, 0, 86, 186, 0, 1)
+
 		if !@state.dim.vert
 			mat = [
 				1.0*scale,0.0,0.0,0.000
@@ -112,48 +132,31 @@ class GridItem extends Component
 			]
 		else
 			mat = [
-				scale_xx*scale,0.0,scale_xz*scale,0.000
-				0,1*scale,0,0
-				scale_zx*scale,0,scale_zz*scale,0
+				scale_xx*scale,@rand()*0.1,scale_xz*scale,0.000
+				@rand()*0.1,1*scale,0,0
+				scale_zx*scale,@rand()*0.1,scale_zz*scale,0
 				@state.dim.x,@state.dim.y,0,1				
 			]
 
 		return 'matrix3d('+mat.join(',')+')'
 
-
-
-	getMatrix: ()->
-		if !@state.final
-			return @props.startMatrixString && @props.startMatrixString() || @startMatrixString()
-		return 'translate('+@state.dim.x+'px,'+@state.dim.y+'px)'
-			
-
+	endTransform: ()->
+		'translate('+@state.dim.x+'px,'+@state.dim.y+'px)'
 
 	getTransition: ()->
-		if @state.final && @state.post_final == false
-			return 'transform ' + (if @props.ease != null then @props.ease else @context.ease)
-		return null 
-
-
-
-	getStyle: ->
-		visibility : @props.visible && 'initial' || 'hidden'
-		transition : @getTransition()
-		'transform-origin': @state.dim.vert && (@context.scroll_up && 'left' || 'right') || ( !@context.scroll_up && 'top' || 'bottom' )#!@context.scroll_up && 'top' || 'bottom'
-		transform : @getMatrix()
-		height : @state.dim.h
-		width : @state.dim.w 
-
-
+		'transform ' + (if @props.ease != null then @props.ease else @context.ease)
 
 	render: ()->
-		# console.log 'RENDER'
 		@state.dim = @getDim()
-
+		style = 
+			visibility : 'hidden'
+			transform : @startTransform()
+			height : @state.dim.h
+			width : @state.dim.w 
 		h 'div',
 			className: '-i-grid-item '+(@props.className||'')
 			ref: @link_ref
-			style: @getStyle() #Object.assign({},@props.style,@getStyle())
+			style: style 
 			@props.children
 
 

@@ -4,7 +4,7 @@ console.log(__dirname)
 var cfg = {
   devtool: 'source-map',
   module: {
-    loaders: [
+    rules: [
       { test: /\.coffee$/, use: "coffee-loader"},
       { test: /\.glsl$/, use: "glsl-template-loader" },
       { test: /\.(xml|html|txt|md)$/, loader: "raw-loader" },

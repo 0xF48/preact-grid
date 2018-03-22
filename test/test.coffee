@@ -96,55 +96,57 @@ class LargeGridTest extends Component
 		@appendItems()
 
 	appendItems: ()=>
-		for i in [0...200]
+		log 'append'
+		for i in [0...100]
 			c = Math.floor(255 - rand()*40)
 			@list.push h GridItem,
 				w: Math.floor(1+rand()*2)
 				h: Math.floor(1+rand()*2)
 				key: @list.length
-				h Slide,
+				h 'div',
 					style:
+						width: '100%'
+						height: '100%'
 						background: "rgb(#{c-100},#{c},#{c}"
 					className: 'grid-item'
 					center: yes
 					@list.length
 
-	prependItems: ()=>
-		l = @list.length
-		for i in [0...200]
-			c = Math.floor(255 - rand()*40)
-			@list.unshift h GridItem,
-				w: Math.floor(1+rand()*2)
-				h: Math.floor(1+rand()*2)
-				key: l + 200 - i
-				prepend: true
-				h Slide,
-					style:
-						background: "rgb(#{c-100},#{c},#{c}"
-					className: 'grid-item'
-					center: yes
-					l + 200 - i
+	# prependItems: ()=>
+	# 	l = @list.length
+	# 	for i in [0...200]
+	# 		c = Math.floor(255 - rand()*40)
+	# 		@list.unshift h GridItem,
+	# 			w: Math.floor(1+rand()*2)
+	# 			h: Math.floor(1+rand()*2)
+	# 			key: l + 200 - i
+	# 			h Slide,
+	# 				style:
+	# 					background: "rgb(#{c-100},#{c},#{c}"
+	# 				className: 'grid-item'
+	# 				center: yes
+	# 				l + 200 - i
 
 	onMaxReached: =>
 		log 'max reached'
-		setTimeout =>
-			if @list.length > 5000
-				return @setState
-					max_reached: yes
-			@appendItems()
-			@forceUpdate()
-		,@state.use_timeout && 1000 || 0
+		# setTimeout =>
+			# if @list.length > 5000
+			# 	return @setState
+			# 		max_reached: yes
+		@appendItems()
+		@forceUpdate()
+		# ,(@state.use_timeout && 10000 || 0)
 
 	onMinReached: =>
 		log 'min reached'
 		# return false
-		setTimeout =>
-			if @list.length > 5000
-				return @setState
-					max_reached: yes
-			@prependItems()
-			@forceUpdate()
-		,@state.use_timeout && 1000 || 0
+		# setTimeout =>
+		# 	if @list.length > 5000
+		# 		return @setState
+		# 			max_reached: yes
+		# 	@prependItems()
+		# 	@forceUpdate()
+		# ,@state.use_timeout && 1000 || 0
 
 	render: ->
 		# console.log @list
@@ -155,15 +157,14 @@ class LargeGridTest extends Component
 			h Grid,
 				className: 'grid'
 				key: @state.key
-				size: 10
-				fixed: yes
+				size: 8
+				# fixed: yes
 				# ease: '0.4s ease'
 				vert: @state.vertical
 				prepend: @state.prepend
 				animate: @state.use_animate
-				bufferOffsetCells: 1
-				bufferPadCells: 1
-				viewOffsetCells: 0
+				bufferPadCells: 4
+				viewPadCells: 0
 				variation: 1
 				postChildren: h LoadIcon,
 					vert: @state.vertical
@@ -239,7 +240,7 @@ class Test extends Component
 
 
 	buildItems: ->
-		@scrollable_list_items = [0...20000].map (i)->
+		@scrollable_list_items = [0...200].map (i)->
 			c = Math.floor(255 - rand()*40)
 			h GridItem,
 				w: 1
@@ -290,42 +291,43 @@ class Test extends Component
 		# console.log 'test'
 
 
-		scrollable_list = h Grid,
-			className: 'grid'
-			size: 1
-			dim: 40
-			variation: 0
-			bufferOffsetCells: 4
-			bufferPadCells: 4
-			viewOffsetCells: 4
-			animate: false
-			@scrollable_list_items
+		# scrollable_list = h Grid,
+		# 	className: 'grid'
+		# 	size: 1
+		# 	dim: 40
+		# 	variation: 0
+		# 	bufferOffsetCells: 4
+		# 	bufferPadCells: 4
+		# 	viewOffsetCells: 4
+		# 	animate: false
+		# 	@scrollable_list_items
 		
 
 
-		scrollable_sticky_list = h Grid,
-			className: 'grid'
-			size: 1
-			dim: 100
-			variation: 0
-			@scrollable_slist_items
+		# scrollable_sticky_list = h Grid,
+		# 	className: 'grid'
+		# 	size: 1
+		# 	dim: 100
+		# 	variation: 0
+		# 	@scrollable_slist_items
 		
-		scrollable_sticky_grid = h Grid,
-			className: 'grid'
-			size: 4
-			variation: 1
-			dim: 100
-			@scrollable_sgrid_items
+		# scrollable_sticky_grid = h Grid,
+		# 	className: 'grid'
+		# 	size: 4
+		# 	variation: 1
+		# 	dim: 100
+		# 	@scrollable_sgrid_items
 
 
 		
 		h Slide,
 			className: 'main'
 			vert: yes
-			h Slide,
-				center: yes
-				dim: DIM
-				h Counter
+			h LargeGridTest
+			# h Slide,
+			# 	center: yes
+			# 	dim: DIM
+			# 	h Counter
 
 			# h Slide,
 			# 	vert: no
@@ -338,7 +340,7 @@ class Test extends Component
 			# 		h Slide,
 			# 			className: 'grid-wrap'
 			# 			scrollable_list
-			h LargeGridTest
+			
 
 					
 

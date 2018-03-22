@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "webpack-dev-server --progress --config ./test/test.config.js"
+    "dev": "webpack-dev-server --mode development --progress --config ./test/test.config.js",
+    "prod": "webpack --mode production --progress --config ./test/test.config.js"
   },
   "author": "arxii",
   "license": "ISC",
@@ -23,7 +24,11 @@
     "preact-scroll-events": "^1.0.1",
     "preact-slide": "^0.2.1-b",
     "style-loader": "^0.20.2",
-    "webpack": "^3.11.0"
+    "webpack": "^4.2.0",
+    "webpack-cli": "^2.0.12"
   },
-  "dependencies": {}
+  "dependencies": {
+    "tile-grid-util": "^0.1.1",
+    "webpack-dev-server": "^3.1.1"
+  }
 }
