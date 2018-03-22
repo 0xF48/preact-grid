@@ -1,1 +1,1 @@
-site/* binary
+dist/**.* binary

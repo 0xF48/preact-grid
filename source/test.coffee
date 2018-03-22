@@ -2,7 +2,7 @@
 require './test.less'
 Slide = require 'preact-slide'
 {MinMaxScrollEvent} = require 'preact-scroll-events'
-{Grid,GridItem} = require '../index'
+{Grid,GridItem} = require './lib.coffee'
 LoadIcon = require '../source/SquareLoaderIcon.coffee'
 DIM = 80
 window.log = console.log.bind(console)
