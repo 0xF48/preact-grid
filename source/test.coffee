@@ -249,7 +249,7 @@ class Test extends Component
 			c = Math.floor(255 - rand()*40)
 			h GridItem,
 				w: 1
-				h: 1
+				h: 3
 				key: i
 				h Slide,
 					style:

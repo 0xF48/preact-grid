@@ -32,9 +32,9 @@ class GridItem extends Component
 				@hide()
 			else if props.visible == true
 				@show()			
-		
+
+
 		else if @_item.parentNode.clientWidth != @state.pw && @state.pw != 0
-			# log 'resize'
 			@state.pw = @_item.parentNode.clientWidth
 			setTimeout @resize,0
 

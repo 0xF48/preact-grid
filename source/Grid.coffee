@@ -1,6 +1,8 @@
 {h,Component} = require 'preact'
 require './Grid.less'
-{TileGrid,Tile,Rect} = require 'tile-grid-util'
+{TileGrid,Tile,Rect} = require './tile.coffee'
+
+
 
 c = 0
 # all the props used by this component and their default values.
@@ -150,7 +152,7 @@ class Grid extends Component
 		if !@_outer
 			return 0
 		if @props.vert
-			d = @_outer.clientWidth / @props.size
+			d = @_inner.clientWidth / @props.size
 		else
 			d = @_outer.clientHeight / @props.size
 		return @roundDim(d)
@@ -161,12 +163,12 @@ class Grid extends Component
 			return 0
 		if @props.vert
 			if @props.fixed
-				d = @_outer.clientHeight / @props.length
+				d = @_inner.clientHeight / @props.length
 			else
 				d = @props.dim || @_outer.clientWidth / @props.size
 		else
 			if @props.fixed
-				d = @_outer.clientWidth / @props.length
+				d = @_inner.clientWidth / @props.length
 			else
 				d = @props.dim || @_outer.clientHeight / @props.length
 		return @roundDim(d)
@@ -205,7 +207,8 @@ class Grid extends Component
 	#calculate which children get rendered based on scroll position and container/child size. The offset in units is managed with bufferOffsetCells
 	setDisplayChildren: ()=>
 		scroll = @updateScrollPosition()
-	
+
+
 
 		if @props.vert
 			outer_size = @_outer.clientHeight
@@ -223,7 +226,6 @@ class Grid extends Component
 		r_max = Math.clamp(Math.floor( (outer_scroll + outer_size) / dim) + @props.viewRowsOffset, 0, l) 
 
 
-
 	
 		# calculate the min and max rows for children that need to be rendered to DOM
 		if r_min >= @state.render_min && r_max <= @state.render_max && r_max != 0
@@ -237,6 +239,7 @@ class Grid extends Component
 				@state.render_max = Math.clamp(r_max + @props.renderRowsPad,0,l)
 
 
+
 		# calculate the min and max rows for children that need to be visible.
 		if r_min >= @state.view_min && r_max < @state.view_max || @props.animate == false
 			recalc_view = false
@@ -248,7 +251,8 @@ class Grid extends Component
 				@state.view_min = r_min 
 				@state.view_max = Math.clamp(r_max + @props.viewRowsPad,0,l)
 
-		# log @state.render_min,@state.render_max
+
+
 		# recalculate all children that need to be rendered.
 		if recalc_children
 			@state.display_children = []
@@ -281,7 +285,9 @@ class Grid extends Component
 						else 
 							@state.display_children.unshift child			
 			return true
-		
+
+
+
 		# recalculate rendered children to see if they need to be visible or not
 		else if recalc_view
 			for child in @state.display_children
