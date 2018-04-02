@@ -1,6 +1,6 @@
 {
   "name": "preact-grid",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "💠 Preact Infinite Scrolling Tile Grid",
   "main": "index.js",
   "repository": {
