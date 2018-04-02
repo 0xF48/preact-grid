@@ -39,6 +39,6 @@
     "webpack-dev-server": "^3.1.1"
   },
   "dependencies": {
-    "tile-grid-util": "^0.1.2"
+    "tile-grid-util": "^0.1.5"
   }
 }
