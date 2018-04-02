@@ -1,6 +1,6 @@
 {h,Component} = require 'preact'
 require './Grid.less'
-{TileGrid,Tile,Rect} = require './tile.coffee'
+{TileGrid,Tile,Rect} = require 'tile-grid-util'
 
 
 
@@ -105,6 +105,8 @@ class Grid extends Component
 			height: child.attributes.h
 			item: child
 		
+		if tile.w >= @_grid.x2
+			throw new Error 'item does not fit in grid size'
 		while !@_grid.addTile(tile,0,@_grid.x2,@_grid.full.y1,0)
 			@_grid.pad(0,0,10,0)
 			@state.rows_added += @props.appendRowsCount

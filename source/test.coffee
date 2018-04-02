@@ -97,11 +97,25 @@ class LargeGridTest extends Component
 
 	appendItems: ()=>
 		log 'append'
-		for i in [0...100]
+		
+		@list.push h GridItem,
+			w: 2
+			h: 2
+			key: @list.length
+			h Slide,
+				center: yes
+				style: 
+					color: 'black'
+					background: "rgb(#{c-100},#{c},#{c}"
+				@list.length
+
+	
+
+		for i in [0...4]
 			c = Math.floor(255 - rand()*40)
 			@list.push h GridItem,
-				w: Math.floor(1+rand()*2)
-				h: Math.floor(1+rand()*2)
+				w: 1
+				h: 1
 				key: @list.length
 				h Slide,
 					center: yes
@@ -109,6 +123,8 @@ class LargeGridTest extends Component
 						color: 'black'
 						background: "rgb(#{c-100},#{c},#{c}"
 					@list.length
+
+
 				
 
 	# prependItems: ()=>
@@ -156,7 +172,7 @@ class LargeGridTest extends Component
 			h Grid,
 				className: 'grid'
 				key: @state.key
-				size: 8
+				size: 2
 				vert: @state.vertical
 				prepend: @state.prepend
 				animate: @state.use_animate
