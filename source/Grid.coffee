@@ -22,7 +22,7 @@ DEFAULT_PROPS =
 	length: 5 # the length of the grid when it is fixed.
 	animate: yes #do animations?
 	variation: 1 #animation variation amount for each child.
-
+	
 
 
 # clamp helper
@@ -180,13 +180,14 @@ class Grid extends Component
 		prepend_condition = !newProps.fixed && newProps.children[0] && oldProps.children[0] && newProps.children[0].key != oldProps.children[0].key
 		
 		# append/prepend new children
+		# log newProps.children.length,oldProps.children.length
 		if newProps.children.length > oldProps.children.length
 			if prepend_condition
 				@prependChildren(newProps.children)
 			else
 				@appendChildren(newProps.children)
 			
-			@setDisplayChildren()
+			@setDisplayChildren(true)
 			@forceUpdate()
 			return true
 		return false
@@ -207,7 +208,7 @@ class Grid extends Component
 
 
 	#calculate which children get rendered based on scroll position and container/child size. The offset in units is managed with bufferOffsetCells
-	setDisplayChildren: ()=>
+	setDisplayChildren: (force)=>
 		scroll = @updateScrollPosition()
 
 
@@ -253,7 +254,8 @@ class Grid extends Component
 				@state.view_min = r_min 
 				@state.view_max = Math.clamp(r_max + @props.viewRowsPad,0,l)
 
-
+		if force
+			recalc_children = true
 
 		# recalculate all children that need to be rendered.
 		if recalc_children

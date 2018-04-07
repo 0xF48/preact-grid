@@ -103,6 +103,8 @@ class GridItem extends Component
 
 	componentDidMount: ->
 		@state.pw = @_item.parentNode.clientWidth
+		if !@context.animate
+			return
 		clearTimeout @show
 		if @props.visible != @state.visible && @props.visible == true
 			setTimeout @show,50+@rand()*50
@@ -149,8 +151,8 @@ class GridItem extends Component
 	render: ()->
 		@state.dim = @getDim()
 		style = 
-			visibility : 'hidden'
-			transform : @startTransform()
+			visibility : !@context.animate && 'visible' || 'hidden'
+			transform : !@context.animate && @endTransform() || @startTransform()
 			height : @state.dim.h
 			width : @state.dim.w 
 		h 'div',

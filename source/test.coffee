@@ -2,7 +2,7 @@
 require './test.less'
 Slide = require 'preact-slide'
 {MinMaxScrollEvent} = require 'preact-scroll-events'
-{Grid,GridItem} = require '../index'
+{Grid,GridItem} = require './lib.coffee'
 LoadIcon = require '../source/SquareLoaderIcon.coffee'
 DIM = 80
 window.log = console.log.bind(console)
@@ -97,25 +97,11 @@ class LargeGridTest extends Component
 
 	appendItems: ()=>
 		log 'append'
-		
-		@list.push h GridItem,
-			w: 2
-			h: 2
-			key: @list.length
-			h Slide,
-				center: yes
-				style: 
-					color: 'black'
-					background: "rgb(#{c-100},#{c},#{c}"
-				@list.length
-
-	
-
-		for i in [0...4]
+		for i in [0...100]
 			c = Math.floor(255 - rand()*40)
 			@list.push h GridItem,
-				w: 1
-				h: 1
+				w: Math.floor(1+rand()*2)
+				h: Math.floor(1+rand()*2)
 				key: @list.length
 				h Slide,
 					center: yes
@@ -123,8 +109,6 @@ class LargeGridTest extends Component
 						color: 'black'
 						background: "rgb(#{c-100},#{c},#{c}"
 					@list.length
-
-
 				
 
 	# prependItems: ()=>
@@ -172,7 +156,7 @@ class LargeGridTest extends Component
 			h Grid,
 				className: 'grid'
 				key: @state.key
-				size: 2
+				size: 8
 				vert: @state.vertical
 				prepend: @state.prepend
 				animate: @state.use_animate
@@ -265,7 +249,7 @@ class Test extends Component
 			c = Math.floor(255 - rand()*40)
 			h GridItem,
 				w: 1
-				h: 3
+				h: 1
 				key: i
 				h Slide,
 					style:
